@@ -2,6 +2,6 @@
 var extend = require('xtend'),
     user = require('./database_user'),
     diary = require('./database_diary'),
-    report = require('./database_report');
+    diagnosis = require('./database_diagnosis');
 
-module.exports = extend(user, diary, report);
+module.exports = extend(user, diary, diagnosis);

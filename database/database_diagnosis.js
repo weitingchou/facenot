@@ -4,32 +4,30 @@ var log = require('logule').init(module, 'DB'),
     Schema = mongoose.Schema,
     db = mongoose.createConnection(config.dbUrl);
 
-var ReportSchema = new Schema({
+var DiagnosisSchema = new Schema({
     date: Date,
+    analyzedDiaries: [String],
     score: Number,
-    content: String,
-    treatment: String,
-    action: String,
-    userEmail: String
+    report: String,
+    userId: String
 });
-var Report = db.model('Report', ReportSchema);
+var Diagnosis = db.model('Diagnosis', DiagnosisSchema);
 
-exports.createReport = function(score, content, treatment, action, userEmail, callback) {
-    var report = new Report({
+exports.createDiagnosis = function(arrayOfDiaries, score, report, userId, callback) {
+    var diagnosis = new Diagnosis({
         date: new Date(),
+        analyzedDiaries: arrayOfDiaries,
         score: score,
-        content: content,
-        treatment: treatment,
-        action: action,
-        userEmail: userEmail
+        report: report,
+        userId: userId
     });
-    report.save(function(err) {
+    diagnosis.save(function(err) {
         if (err) { return callback(err, null); }
         callback(null, 'Success');
     });
 };
 
-exports.getReportByTime = function(userEmail, year, month, callback) {
+exports.getDiagnosisByTime = function(userId, year, month, callback) {
     var start, end;
     switch (month) {
         case 'Jan':
@@ -84,36 +82,48 @@ exports.getReportByTime = function(userEmail, year, month, callback) {
             var error = new Error('Invalid month string: '+month);
             return callback(error, null);
     }
-    Report.find({email: email, date: {$gte: start, $lte: end}}, function(err, data) {
+    Diagnosis.find({userId: userId, date: {$gte: start, $lte: end}}, function(err, data) {
         if (err) { return callback(err, null); }
         else if (data.length === 0) {
-            var error = new Error('Report(s) with the specified month was not found');
-            error.name = 'NoReportError';
+            var error = new Error('No diagnosis found');
+            error.name = 'NoDiagnosisError';
             return callback(error, null);
         }
         callback(null, data);
     });
 };
 
-exports.getReport = function(id, callback) {
-    Report.findOne({_id: id}, function(err, report) {
+exports.getAllDiagnoses = function(userId, callback) {
+    Diagnosis.find({userId: userId}, function(err, diagnoses) {
         if (err) { return callback(err, null); }
-        else if (diary === 'undefined') {
-            var error = new Error('Report(s) with the specified id was not found');
-            error.name = 'IDError';
+        else if (diagnoses.length === 0) {
+            var error = new Error('No diagnosis found');
+            error.name = 'NoDiagnosisError';
             return callback(error, null);
         }
-        callback(null, report);
+        callback(null, diagnoses);
     });
 };
 
-exports.deleteReport = function(id, callback) {
-    Report.remove({_id: id}, callback);
+exports.getDiagnosis = function(id, callback) {
+    Diagnosis.findOne({_id: id}, function(err, diagnosis) {
+        if (err) { return callback(err, null); }
+        else if (diagnosis === 'undefined') {
+            var error = new Error('Diagnosis(s) with the specified id was not found');
+            error.name = 'IDError';
+            return callback(error, null);
+        }
+        callback(null, diagnosis);
+    });
+};
+
+exports.deleteDiagnosis = function(id, callback) {
+    Diagnosis.remove({_id: id}, callback);
 };
 
 exports.deleteAllDiaries = function() {
-    Report.remove({}, function(err) {
-        if (err) { log.error('Failed to delete all reports, err: '+err); }
+    Diagnosis.remove({}, function(err) {
+        if (err) { log.error('Failed to delete all diagnosiss, err: '+err); }
     });
 };
 

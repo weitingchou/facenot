@@ -9,9 +9,9 @@ function allow_methods(methods) {
     };
 }
 
-exports.user = function(router) {
+exports.diagnosis = function(router) {
 
-    router.route('/')
+    router.route('/:userId/diagnosis/:diagnosisId')
         .get(
         function(req, res) {
             var id = req.query.id || undefined;
@@ -31,40 +31,34 @@ exports.user = function(router) {
                 res.status(400).send({error: 'Bad request'});
             }
         })
-        .post(function(req, res) {
-            function checkBirthFormat(birth) {
-                if (birth) {
-                    var validator = /^([0-9]{4}[-])([0-9]{2}[-])([0-9]{2})$/i;
-                    if (!validator.test(birth)) {
-                        return false;
-                    } else {
-                        return true;
-                    }
+        .options(allow_methods('GET'));
+
+    router.route('/:userId/diagnoses')
+        .get(function(req, res) {
+            var userId = req.param.userId,
+                query = req.query || undefined;
+            if (query) {
+                var yearmonth = query.yearmonth || undefined;
+                if (yearmonth) {
+                } else {
+
                 }
-                return false;
-            }
-
-            var name = req.body.name || undefined,
-                birth = req.body.birth || undefined,
-                email = req.body.email || undefined;
-
-            if (name && checkBirthFormat(birth) && email) {
-                var age = Math.floor(((new Date() - new Date(birth.split('-').reverse().join('-'))) / 1000 / (60*60*24)) / 365.25);
-                db.createUser(name, birth, age, email, function(err) {
+            } else {
+                db.getAllDiagnoses(userId, function(err, diagnoses) {
                     if (err) {
-                        log.error('Failed to create user: '+email);
+                        log.error(err);
+                        if (err.name === 'NoDiagnosisError') {
+                            return res.status(404).send({error: err.message});
+                        }
                         return res.status(500).send({error: 'Internal error'});
                     }
-                    res.send(200, {result: 'Success'});
+                    res.send(200, {result: diagnoses});
                 });
-            } else {
-                log.error('Bad request: '+req.body);
-                res.status(400).send({error: 'Bad request'});
             }
         })
-        .options(allow_methods('GET', 'POST'));
+        .options(allow_methods('GET'));
 };
 
 exports.addTo = function(router) {
-    this.user(router);
+    this.diagnosis(router);
 };

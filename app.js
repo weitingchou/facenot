@@ -5,8 +5,7 @@ var express = require('express'),
     dye = require('dye'),
     http = require('http'),
     user = require('./user'),
-//    diary = require('./diary'),
-//    report = require('./report'),
+    routes = require('./routes'),
     watson = require('./watson');
 
 var app = express();
@@ -25,9 +24,8 @@ app.use(function(req, res, next) {
     next();
 });
 
+app.use('/', routes.router);
 app.use('/user', user.router);
-//app.use('/diary', diary,router);
-//app.use('/report', report.router);
 app.use('/watson', watson.router);
 
 // catch 404 and forward to error handler

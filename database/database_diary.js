@@ -6,28 +6,42 @@ var log = require('logule').init(module, 'DB'),
 
 var DiarySchema = new Schema({
     date: Date,
-    picture: String,
-    picAge: Number,
+    photoAge: Number,
     content: String,
-    userEmail: String
+    userId: String
 });
 var Diary = db.model('Diary', DiarySchema);
 
-exports.createDiary = function(picture, picAge, content, userEmail, callback) {
+var DiaryPhotoSchema = new Schema({
+    diaryId: { type: String, unique: true },
+    photo: Buffer
+});
+var DiaryPhoto = db.model('DiaryPhoto', DiaryPhotoSchema);
+
+exports.createDiary = function(photoBuf, photoAge, content, userId, callback) {
     var diary = new Diary({
         date: new Date(),
-        picture: picture,
-        picAge: picAge,
+        photoAge: photoAge,
         content: content,
-        userEmail: userEmail
+        userId: userId
     });
-    diary.save(function(err) {
+    var photo = new DiaryPhoto({
+        diaryId: diary._id,
+        photo: photoBuf
+    });
+
+    async.each([diary, photo], function(data, done) {
+        data.save(function(err) {
+            if (err) { return done(err, null); }
+            done(null, 'Success');
+        });
+    }, function(err) {
         if (err) { return callback(err, null); }
         callback(null, 'Success');
     });
 };
 
-exports.getDiaryByTime = function(userEmail, year, month, callback) {
+exports.getDiaryByTime = function(userId, year, month, callback) {
     var start, end;
     switch (month) {
         case 'Jan':
@@ -82,7 +96,7 @@ exports.getDiaryByTime = function(userEmail, year, month, callback) {
             var error = new Error('Invalid month string: '+month);
             return callback(error, null);
     }
-    Diary.find({email: email, date: {$gte: start, $lte: end}}, function(err, data) {
+    Diary.find({userId: userId, date: {$gte: start, $lte: end}}, function(err, data) {
         if (err) { return callback(err, null); }
         else if (data.length === 0) {
             var error = new Error('Diaries with the specified month was not found');
@@ -102,6 +116,18 @@ exports.getDiary = function(id, callback) {
             return callback(error, null);
         }
         callback(null, diary);
+    });
+};
+
+exports.getDiaryPhoto = function(diaryId, callback) {
+    DiaryPhoto.findOne({diaryId: diaryId}, function(err, photo) {
+        if (err) { return callback(err, null); }
+        else if (photo === 'undefined') {
+            var error = new Error('Photo with the specified diary id was not found');
+            error.name = 'IDError';
+            return callback(error, null);
+        }
+        callback(null, photo);
     });
 };
 

@@ -8,16 +8,16 @@ var UserSchema = new Schema({
     name: String,
     birth: Date,
     age: Number,
-    email: {type: String, unique: true}
+    id: {type: String, unique: true}
 });
 var User = db.model('User', UserSchema);
 
-exports.createUser = function(name, birth, age, email, callback) {
+exports.createUser = function(name, birth, age, id, callback) {
     var user = new User({
         name: name,
         birth: birth,
         age: age,
-        email: email
+        id: id
     });
     user.save(function(err) {
         if (err) { return callback(err, null); }
@@ -25,11 +25,11 @@ exports.createUser = function(name, birth, age, email, callback) {
     });
 };
 
-exports.getUser = function(email, callback) {
-    User.findOne({email: email}, function(err, user) {
+exports.getUser = function(id, callback) {
+    User.findOne({id: id}, function(err, user) {
         if (err) { return callback(err, null); }
         else if (user === 'undefined') {
-            var error = new Error('User with the specified email address was not found');
+            var error = new Error('User with the specified id address was not found');
             error.name = 'IDError';
             callback(error, null);
         }
@@ -37,8 +37,8 @@ exports.getUser = function(email, callback) {
     });
 };
 
-exports.deleteUser = function(email, callback) {
-    User.remove({email: email}, callback);
+exports.deleteUser = function(id, callback) {
+    User.remove({id: id}, callback);
 };
 
 exports.deleteAllUsers = function() {
