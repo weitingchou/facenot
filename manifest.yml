@@ -2,6 +2,9 @@
 disk_quota: 1024M
 domain: mybluemix.net
 instances: 1
+services:
+- Question and Answer-5v
+- mongodb-o3
 applications:
 - name: Facnot
   host: facnot

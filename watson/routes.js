@@ -3,10 +3,9 @@
  * @module watson/routes
  */
 
-var log = require('logule').init(module, 'Watson');
-
-var AlchemyAPI = require('./alchemyapi');
-var alchemyapi = new AlchemyAPI();
+var log = require('logule').init(module, 'Watson'),
+    AlchemyAPI = require('./alchemyapi'),
+    qa = require('./qa');
 
 function allow_methods(methods) {
     return function(req, res) {
@@ -16,6 +15,8 @@ function allow_methods(methods) {
 }
 
 exports.alchemy = function(router) {
+
+    var alchemyapi = new AlchemyAPI();
 
     function handler(req, res) {
         try {
@@ -55,7 +56,7 @@ exports.alchemy = function(router) {
             }
         } catch (err) {
             log.error('Unexpected error, err: '+err);
-            res.status(500).send(JSON.stringify({error: 'Interal Error'}));
+            res.status(500).send({error: 'Interal Error'});
         }
     };
 
@@ -68,6 +69,39 @@ exports.alchemy = function(router) {
         .options(allow_methods('POST'));
 };
 
+exports.qa = function(router) {
+
+    router.route('/qa/simple')
+        .post(
+        function(req, res) {
+            try {
+                var question = req.body.question || undefined,
+                    timeout = req.body.timeout || 1;
+                if (question) {
+                    log.info('question: '+question);
+                    qa.askSimpleQuestion(question, timeout, function(err, answer) {
+                        if (err) {
+                            log.error(err);
+                            if (err.name === 'EmptyAnswerError') {
+                                return res.status(404).send({error: err.message});
+                            }
+                            return res.status(500).send({error: 'Internal error'});
+                        }
+                        res.send(200, {result: answer});
+                    });
+                } else {
+                    log.error('Bad request, empty question!');
+                    res.status(400).send({error: 'Bad request, empty question'});
+                }
+            } catch (err) {
+                log.error('Unexpected error: '+err);
+                res.status(500).send({error: 'Interal Error'});
+            }
+        })
+        .options(allow_methods('POST'));
+};
+
 exports.addTo = function(router) {
     this.alchemy(router);
+    this.qa(router);
 };
