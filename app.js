@@ -24,9 +24,9 @@ app.use(function(req, res, next) {
     next();
 });
 
-app.use('/', routes.router);
 app.use('/user', user.router);
-app.use('/watson', watson.router);
+app.use('/api', routes.router);
+app.use('/api/watson', watson.router);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

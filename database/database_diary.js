@@ -6,8 +6,10 @@ var log = require('logule').init(module, 'DB'),
 
 var DiarySchema = new Schema({
     date: Date,
-    photoAge: Number,
     content: String,
+    analysis: {
+        age: Number
+    },
     userId: String
 });
 var Diary = db.model('Diary', DiarySchema);
@@ -18,11 +20,13 @@ var DiaryPhotoSchema = new Schema({
 });
 var DiaryPhoto = db.model('DiaryPhoto', DiaryPhotoSchema);
 
-exports.createDiary = function(photoBuf, photoAge, content, userId, callback) {
+exports.createDiary = function(userId, photoBuf, photoAge, content, callback) {
     var diary = new Diary({
         date: new Date(),
-        photoAge: photoAge,
         content: content,
+        analysis: {
+            age: photoAge
+        },
         userId: userId
     });
     var photo = new DiaryPhoto({
@@ -107,6 +111,18 @@ exports.getDiaryByTime = function(userId, year, month, callback) {
     });
 };
 
+exports.getAllDiaries = function(userId, callback) {
+    Diary.find({userId: userId}, function(err, data) {
+        if (err) { return callback(err, null); }
+        else if (data.length === 0) {
+            var error = new Error('No diary found');
+            error.name = 'NoDiaryError';
+            return callback(error, null);
+        }
+        callback(null, data);
+    });
+};
+
 exports.getDiary = function(id, callback) {
     Diary.findOne({_id: id}, function(err, diary) {
         if (err) { return callback(err, null); }
@@ -118,6 +134,7 @@ exports.getDiary = function(id, callback) {
         callback(null, diary);
     });
 };
+
 
 exports.getDiaryPhoto = function(diaryId, callback) {
     DiaryPhoto.findOne({diaryId: diaryId}, function(err, photo) {
@@ -135,9 +152,18 @@ exports.deleteDiary = function(id, callback) {
     Diary.remove({_id: id}, callback);
 };
 
+exports.deleteDiaryPhoto = function(diaryId, callback) {
+    DiaryPhoto.remove({diaryId: diaryId}, callback);
+};
+
 exports.deleteAllDiaries = function() {
     Diary.remove({}, function(err) {
         if (err) { log.error('Failed to delete all diaries, err: '+err); }
     });
 };
 
+exports.deleteAllDiaryPhotos = function() {
+    DiaryPhoto.remove({}, function(err) {
+        if (err) { log.error('Failed to delete all diary photos, err: '+err); }
+    });
+};

@@ -13,7 +13,7 @@ var DiagnosisSchema = new Schema({
 });
 var Diagnosis = db.model('Diagnosis', DiagnosisSchema);
 
-exports.createDiagnosis = function(arrayOfDiaries, score, report, userId, callback) {
+exports.createDiagnosis = function(userId, arrayOfDiaries, score, report, callback) {
     var diagnosis = new Diagnosis({
         date: new Date(),
         analyzedDiaries: arrayOfDiaries,
@@ -121,9 +121,9 @@ exports.deleteDiagnosis = function(id, callback) {
     Diagnosis.remove({_id: id}, callback);
 };
 
-exports.deleteAllDiaries = function() {
+exports.deleteAllDiagnoses = function() {
     Diagnosis.remove({}, function(err) {
-        if (err) { log.error('Failed to delete all diagnosiss, err: '+err); }
+        if (err) { log.error('Failed to delete all diagnoses, err: '+err); }
     });
 };
 
