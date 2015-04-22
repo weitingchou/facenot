@@ -69,6 +69,16 @@ exports.alchemy = function(router) {
         .options(allow_methods('POST'));
 };
 
+exports.speechToText = function(router) {
+
+    router.route('/speechToText')
+        .post(
+        function(req, res) {
+            // Stone's part
+        })
+        .options(allow_methods('POST'));
+};
+
 exports.qa = function(router) {
 
     router.route('/qa/simple')
@@ -103,5 +113,6 @@ exports.qa = function(router) {
 
 exports.addTo = function(router) {
     this.alchemy(router);
+    this.speechToText(router);
     this.qa(router);
 };
