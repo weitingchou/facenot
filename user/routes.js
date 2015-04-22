@@ -1,4 +1,5 @@
 var db = require('../database'),
+    config = require('./config'),
     log = require('logule').init(module, 'User'),
     async = require('async');
 
@@ -9,12 +10,30 @@ function allow_methods(methods) {
     };
 }
 
+// Add an adminstrator account
+function addAdminUser() {
+    db.getUser(config.adminstratorId, function(err) {
+        if (err) {
+            log.error(err);
+            if (err.name === 'IDError') {
+                log.info('Administrator account is yet created!, Creating now.');
+                db.createUser('Administrator', 'unknown', '18', config.adminstratorId, function(err) {
+                    if (err) {
+                        log.error('Failed to create user: '+config.adminstratorId);
+                    }
+                });
+            }
+        }
+    });
+}
+addAdminUser();
+
 exports.user = function(router) {
 
-    router.route('/')
+    router.route('/:userId')
         .get(
         function(req, res) {
-            var id = req.query.id || undefined;
+            var id = req.param.userId || undefined;
             if (id) {
                 db.getUser(id, function(err, user) {
                     if (err) {
@@ -53,6 +72,9 @@ exports.user = function(router) {
                 db.createUser(name, birth, age, email, function(err) {
                     if (err) {
                         log.error('Failed to create user: '+email);
+                        if (err.name === 'DupKeyError') {
+                            return res.status(500).send({error: err.message});
+                        }
                         return res.status(500).send({error: 'Internal error'});
                     }
                     res.send(200, {result: 'Success'});

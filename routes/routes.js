@@ -1,4 +1,5 @@
 var db = require('../database'),
+    adminId = require('../user/config').administratorId,
     log = require('logule').init(module, 'User'),
     async = require('async');
 
@@ -225,6 +226,25 @@ exports.diagnosis = function(router) {
                         return res.status(500).send({error: 'Internal error'});
                     }
                     res.send(200, {result: processResult(result)});
+                });
+            }
+        })
+        .options(allow_methods('GET'));
+};
+
+exports.admin = function(router) {
+
+    router.route('/:userId/reset')
+        .get(
+        function(req, res) {
+            var userId = req.param.userId;
+            if (userId === adminId) {
+                async.series({
+                    cleanDiaries: db.deleteAllDiaries(),
+                    cleanDiagnoses: db.deleteAllDiagnoses()
+                }, function(err) {
+                    if (err) { return res.status(500).send({error: err}); }
+                    res.send(200, 'Success');
                 });
             }
         })

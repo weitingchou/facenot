@@ -121,9 +121,13 @@ exports.deleteDiagnosis = function(id, callback) {
     Diagnosis.remove({_id: id}, callback);
 };
 
-exports.deleteAllDiagnoses = function() {
+exports.deleteAllDiagnoses = function(callback) {
     Diagnosis.remove({}, function(err) {
-        if (err) { log.error('Failed to delete all diagnoses, err: '+err); }
+        if (err) {
+            log.error('Failed to delete all diagnoses, err: '+err); 
+            return eallback(err, null);
+        }
+        callback(null, null);
     });
 };
 

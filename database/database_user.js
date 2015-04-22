@@ -20,7 +20,14 @@ exports.createUser = function(name, birth, age, id, callback) {
         id: id
     });
     user.save(function(err) {
-        if (err) { return callback(err, null); }
+        if (err) {
+            if (err.code === 11000) {
+                var error = new Error('This id is already existing!');
+                error.name = 'DupKeyError';
+                return callback(error, null);
+            }
+            return callback(err, null);
+        }
         callback(null, 'Success');
     });
 };
@@ -41,9 +48,13 @@ exports.deleteUser = function(id, callback) {
     User.remove({id: id}, callback);
 };
 
-exports.deleteAllUsers = function() {
+exports.deleteAllUsers = function(callback) {
     User.remove({}, function(err) {
-        if (err) { log.error('Failed to delete all users, err: '+err); }
+        if (err) {
+            log.error('Failed to delete all users, err: '+err);
+            return callback(err, null);
+        }
+        callback(null, null);
     });
 };
 

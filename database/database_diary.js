@@ -156,14 +156,22 @@ exports.deleteDiaryPhoto = function(diaryId, callback) {
     DiaryPhoto.remove({diaryId: diaryId}, callback);
 };
 
-exports.deleteAllDiaries = function() {
+exports.deleteAllDiaries = function(callback) {
     Diary.remove({}, function(err) {
-        if (err) { log.error('Failed to delete all diaries, err: '+err); }
+        if (err) {
+            log.error('Failed to delete all diaries, err: '+err);
+            return callback(err, null);
+        }
+        callback(null, null);
     });
 };
 
-exports.deleteAllDiaryPhotos = function() {
+exports.deleteAllDiaryPhotos = function(callback) {
     DiaryPhoto.remove({}, function(err) {
-        if (err) { log.error('Failed to delete all diary photos, err: '+err); }
+        if (err) {
+            log.error('Failed to delete all diary photos, err: '+err);
+            return callback(err, null);
+        }
+        callback(null, null);
     });
 };
