@@ -1,4 +1,6 @@
 var db = require('../database'),
+    jsonPath = require('JSONPath'),
+    alchemyApi = require('../watson/alchemyapi'),
     adminId = require('../user/config').administratorId,
     log = require('logule').init(module, 'User'),
     async = require('async');
@@ -29,7 +31,7 @@ exports.diary = function(router) {
     router.route('/:userId/diary/:diaryId')
         .get(
         function(req, res) {
-            var diaryId = req.param.diaryId || undefined;
+            var diaryId = req.params.diaryId || undefined;
             if (diaryId) {
                 db.getDiary(diaryId, function(err, result) {
                     if (err) {
@@ -58,7 +60,7 @@ exports.diary = function(router) {
         })
         .delete(
         function(req, res) {
-            var diaryId = req.param.diaryId || undefined;
+            var diaryId = req.params.diaryId || undefined;
             if (diaryId) {
                 async.parallel({
                     deleteDiary: db.deleteDiary(diaryId),
@@ -80,7 +82,7 @@ exports.diary = function(router) {
     router.route('/:userId/diaryphoto/:diaryId')
         .get(
         function(req, res) {
-            var diaryId = req.param.diaryId || undefined;
+            var diaryId = req.params.diaryId || undefined;
             if (diaryId) {
                 db.getDiaryPhoto(diaryId, function(err, result) {
                     if (err) {
@@ -103,14 +105,43 @@ exports.diary = function(router) {
     router.route('/:userId/diary')
         .post(
         function(req, res) {
-            // Stone's part
+            var userId = req.params.userId,
+                diaryPhoto = jsonPath.eval(req, '$.files.filePic.buffer')[0],
+                diaryContent = jsonPath.eval(req, '$.files.fileContent.buffer')[0];
+
+            if (diaryPhoto && diaryContent) {
+                if ((diaryPhoto.length === 0) || (diaryContent.length === 0)) {
+                    var errmsg = 'Either diary photo or diary content is empty!';
+                    log.error(errmsg);
+                    return res.status(400).send({error: errmsg});
+                }
+                alchemyApi.face_detection('image', diaryPhoto, null, function(res) {
+                    var ageRange = jsonPath(res, $.imageFaces[0].age.ageRange)[0];
+                    if (ageRange) {
+                        db.createDiary(userId, diaryPhto, ageRange, diaryContent, function(err, diaryId) {
+                            if (err) {
+                                log.error('Failed to create diary, err: '+err);
+                                return res.status(500).send({error: 'Internal error'});
+                            }
+                            res.send(200, {result: diaryId});
+                        });
+                    } else {
+                        log.error('Invalid response from Watson server: '+res);
+                        return res.status(500).send({error: 'Internal error'});
+                    }
+                });
+            } else {
+                var errmsg = 'Invalid diary request format';
+                log.error(errmsg);
+                return res.status(400).send({error: errmsg});
+            }
         })
         .options(allow_methods('POST'));
 
     router.route('/:userId/diaries')
         .get(
         function(req, res) {
-            var userId = req.param.userId,
+            var userId = req.params.userId,
                 query = req.query || undefined;
             if (query) {
                 var yearmonth = query.yearmonth || undefined;
@@ -152,7 +183,7 @@ exports.diagnosis = function(router) {
     router.route('/:userId/diagnosis/:diagnosisId')
         .get(
         function(req, res) {
-            var diagnosisId = req.param.diagnosisId || undefined;
+            var diagnosisId = req.params.diagnosisId || undefined;
             if (diagnosisId) {
                 db.getDiagnosis(diagnosisId, function(err, result) {
                     if (err) {
@@ -176,7 +207,7 @@ exports.diagnosis = function(router) {
         })
         .delete(
         function(req, res) {
-            var diagnosisId = req.param.diagnosisId || undefined;
+            var diagnosisId = req.params.diagnosisId || undefined;
             if (diagnosisId) {
                 db.deleteDiagnosis(diagnosisId, function(err) {
                     if (err) {
@@ -195,7 +226,7 @@ exports.diagnosis = function(router) {
     router.route('/:userId/diagnoses')
         .get(
         function(req, res) {
-            var userId = req.param.userId,
+            var userId = req.params.userId,
                 query = req.query || undefined;
             if (query) {
                 var yearmonth = query.yearmonth || undefined;
@@ -237,7 +268,7 @@ exports.admin = function(router) {
     router.route('/:userId/reset')
         .get(
         function(req, res) {
-            var userId = req.param.userId;
+            var userId = req.params.userId;
             if (userId === adminId) {
                 async.series({
                     cleanDiaries: db.deleteAllDiaries(),

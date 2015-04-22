@@ -40,7 +40,7 @@ exports.getAllQA = function(userId, callback) {
 exports.getQA = function(id, callback) {
     QA.findOne({_id: id}, function(err, qa) {
         if (err) { return callback(err, null); }
-        else if (qa === 'undefined') {
+        else if (qa === null) {
             var error = new Error('QA(s) with the specified id was not found');
             error.name = 'IDError';
             return callback(error, null);

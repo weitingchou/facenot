@@ -33,8 +33,9 @@ exports.user = function(router) {
     router.route('/:userId')
         .get(
         function(req, res) {
-            var id = req.param.userId || undefined;
+            var id = req.params.userId || undefined;
             if (id) {
+                log.info('User: '+id);
                 db.getUser(id, function(err, user) {
                     if (err) {
                         log.error(err.message);
@@ -50,6 +51,9 @@ exports.user = function(router) {
                 res.status(400).send({error: 'Bad request'});
             }
         })
+        .options(allow_methods('GET'));
+
+    router.route('/')
         .post(function(req, res) {
             function checkBirthFormat(birth) {
                 if (birth) {
@@ -84,7 +88,7 @@ exports.user = function(router) {
                 res.status(400).send({error: 'Bad request'});
             }
         })
-        .options(allow_methods('GET', 'POST'));
+        .options(allow_methods('POST'));
 };
 
 exports.addTo = function(router) {

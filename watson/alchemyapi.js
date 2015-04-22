@@ -265,6 +265,9 @@ AlchemyAPI.ENDPOINTS['combined'] = {};
 AlchemyAPI.ENDPOINTS['combined']['url'] = '/url/URLGetCombinedData';
 AlchemyAPI.ENDPOINTS['image'] = {};
 AlchemyAPI.ENDPOINTS['image']['url'] = '/url/URLGetImage';
+AlchemyAPI.ENDPOINTS['face_detection'] = {};
+AlchemyAPI.ENDPOINTS['face_detection']['url'] = '/url/URLGetRankedImageFaceTags';
+AlchemyAPI.ENDPOINTS['face_detection']['image'] = '/image/ImageGetRankedImageFaceTags';
 AlchemyAPI.ENDPOINTS['image_keywords'] = {};
 AlchemyAPI.ENDPOINTS['image_keywords']['url'] = '/url/URLGetRankedImageKeywords';
 AlchemyAPI.ENDPOINTS['image_keywords']['image'] = '/image/ImageGetRankedImageKeywords';
@@ -829,3 +832,17 @@ AlchemyAPI.prototype.image_keywords =
   }
 };
 
+AlchemyAPI.prototype.face_detection =
+    function(flavor, data, options, callback) {
+	options = options || {}
+
+	//Add the data to the options and analyze
+  if (flavor === "image") { // if it's an image, we'll pass the image to upload
+	  this.analyze(AlchemyAPI.ENDPOINTS['face_detection'][flavor],
+        options, data, callback);
+  } else {
+	  options[flavor] = data;
+	  this.analyze(AlchemyAPI.ENDPOINTS['face_detection'][flavor],
+        options, callback);
+  }
+};

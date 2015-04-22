@@ -108,7 +108,7 @@ exports.getAllDiagnoses = function(userId, callback) {
 exports.getDiagnosis = function(id, callback) {
     Diagnosis.findOne({_id: id}, function(err, diagnosis) {
         if (err) { return callback(err, null); }
-        else if (diagnosis === 'undefined') {
+        else if (diagnosis === null) {
             var error = new Error('Diagnosis(s) with the specified id was not found');
             error.name = 'IDError';
             return callback(error, null);

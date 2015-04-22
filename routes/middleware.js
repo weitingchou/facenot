@@ -9,13 +9,13 @@ exports.authenticate = function(req, res, next) {
     function reject_unauthorized(error) {
     }
 
-    var userId = req.param.userId;
+    var userId = req.params.userId;
     db.getUser(userId, function(err) {
         if (err) {
             if (err.name === 'IDError') {
                 var errmsg = 'Authentication failed with error: Unknown user id: '+userId;
                 log.error(errmsg);
-                res.status(401).send({error: errmsg});
+                return res.status(401).send({error: errmsg});
             }
             res.status(500).send({error: 'Internal error'});
         }

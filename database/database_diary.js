@@ -37,11 +37,11 @@ exports.createDiary = function(userId, photoBuf, photoAge, content, callback) {
     async.each([diary, photo], function(data, done) {
         data.save(function(err) {
             if (err) { return done(err, null); }
-            done(null, 'Success');
+            done(null, null);
         });
     }, function(err) {
         if (err) { return callback(err, null); }
-        callback(null, 'Success');
+        callback(null, diary._id);
     });
 };
 
@@ -126,7 +126,7 @@ exports.getAllDiaries = function(userId, callback) {
 exports.getDiary = function(id, callback) {
     Diary.findOne({_id: id}, function(err, diary) {
         if (err) { return callback(err, null); }
-        else if (diary === 'undefined') {
+        else if (diary === null) {
             var error = new Error('Diaries with the specified id was not found');
             error.name = 'IDError';
             return callback(error, null);
@@ -139,7 +139,7 @@ exports.getDiary = function(id, callback) {
 exports.getDiaryPhoto = function(diaryId, callback) {
     DiaryPhoto.findOne({diaryId: diaryId}, function(err, photo) {
         if (err) { return callback(err, null); }
-        else if (photo === 'undefined') {
+        else if (photo === null) {
             var error = new Error('Photo with the specified diary id was not found');
             error.name = 'IDError';
             return callback(error, null);

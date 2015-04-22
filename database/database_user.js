@@ -35,7 +35,7 @@ exports.createUser = function(name, birth, age, id, callback) {
 exports.getUser = function(id, callback) {
     User.findOne({id: id}, function(err, user) {
         if (err) { return callback(err, null); }
-        else if (user === 'undefined') {
+        else if (user === null) {
             var error = new Error('User with the specified id address was not found');
             error.name = 'IDError';
             callback(error, null);
