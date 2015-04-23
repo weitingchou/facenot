@@ -1,5 +1,6 @@
 var log = require('logule').init(module, 'DB'),
     config = require('./config'),
+    async = require('async'),
     mongoose = require('mongoose'),
     Schema = mongoose.Schema,
     db = mongoose.createConnection(config.dbUrl);
@@ -13,6 +14,60 @@ var DiagnosisSchema = new Schema({
 });
 var Diagnosis = db.model('Diagnosis', DiagnosisSchema);
 
+var CounterSchema = new Schema({
+    name: {type: String, unique: true},
+    count: Number
+});
+var Counter = db.model('Counter', CounterSchema);
+
+exports.initCounter = function() {
+    async.series({
+        clean_counter: function(callback) {
+            Counter.remove({}, callback);
+        },
+        init_counter: function(callback) {
+            var counter = new Counter({
+                name: 'DiaryCounter',
+                count: 0
+            });
+            counter.save(function(err) {
+                if (err) { callback(err, null); }
+                else { callback(null, null); }
+            });
+        }
+    }, function(err) {
+        if (err) { log.error('Failed to initialize diary counter!, err: '+err); }
+    });
+};
+
+exports.increaseCounter = function(callback) {
+    Counter.findOneAndUpdate({name: 'DiaryCounter'}, {$inc: {count: 1}}, {}, function(err, counter) {
+        if (err) { return callback(err, null); }
+        else if (counter === null) {
+            var errmsg = 'The is not initialized yet!';
+            log.error(errmsg);
+            return callback(errmsg, null);
+        }
+        callback(null, counter.count);
+    });
+};
+
+exports.resetCounter = function(callback) {
+    Counter.findOneAndUpdate({name: 'DiaryCounter'}, {$set: {count: 0}}, {}, function(err, counter) {
+        if (err) { return callback(err, null); }
+        else if (counter === null) {
+            var errmsg = 'The counter is not initialized yet!';
+            log.error(errmsg);
+            return callback(errmsg, null);
+        } else if (counter.count !== 0) {
+            var errmsg = 'Failed to reset counter!';
+            log.error(errmsg);
+            return callback(errmsg, null);
+        }
+        callback(null, null);
+    });
+};
+
 exports.createDiagnosis = function(userId, arrayOfDiaries, score, report, callback) {
     var diagnosis = new Diagnosis({
         date: new Date(),
@@ -23,7 +78,7 @@ exports.createDiagnosis = function(userId, arrayOfDiaries, score, report, callba
     });
     diagnosis.save(function(err) {
         if (err) { return callback(err, null); }
-        callback(null, 'Success');
+        callback(null, diagnosis._id);
     });
 };
 

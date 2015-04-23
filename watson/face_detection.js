@@ -45,7 +45,6 @@ exports.detect = function(flavor, data, params, callback) {
             }
             try {
                 if (body && isJson(body)) {
-                    log.info('here, body: '+body);
                     callback(null, JSON.parse(body));
                 } else {
                     var error = new Error('Not a valid answer from Watson.');

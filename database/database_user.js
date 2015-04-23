@@ -33,16 +33,22 @@ exports.createUser = function(name, birth, age, id, callback) {
 };
 
 exports.getUser = function(id, callback) {
+    log.info('id: '+id);
     User.findOne({id: id}, function(err, user) {
         if (err) { return callback(err, null); }
         else if (user === null) {
+            
             var error = new Error('User with the specified id address was not found');
             error.name = 'IDError';
-            callback(error, null);
+            return callback(error, null);
         }
         callback(null, user);
     });
 };
+
+exports.getAllUsers = function(callback) {
+    User.find({}, callback);
+}
 
 exports.deleteUser = function(id, callback) {
     User.remove({id: id}, callback);

@@ -12,7 +12,7 @@ var app = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(multer({ dest: './uploads/', inMemory: true }));
+app.use(multer({ inMemory: true }));
 
 app.use(function(req, res, next) {
     res.on('finish', function() {

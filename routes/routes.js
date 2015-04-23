@@ -1,9 +1,12 @@
 var db = require('../database'),
+    config =require('./config'),
     jsonPath = require('JSONPath'),
     fd = require('../watson/face_detection'),
-    adminId = require('../user/config').adminId,
+    fm = require('../watson/face_model'),
     log = require('logule').init(module, 'API'),
     async = require('async');
+
+db.initCounter();
 
 function allow_methods(methods) {
     return function(req, res) {
@@ -115,24 +118,70 @@ exports.diary = function(router) {
                     log.error(errmsg);
                     return res.status(400).send({error: errmsg});
                 }
-                fd.detect('image', diaryPhoto, null, function(err, result) {
+                fd.detect('image', diaryPhoto, null, function(err, face) {
                     if (err) {
-                        if (err) {
-                            log.error('Failed to create diary, err: '+err);
-                            return res.status(500).send({error: 'Internal error'});
-                        }
+                        log.error('Failed to do face detection, err: '+err);
+                        return res.status(500).send({error: 'Internal error'});
                     }
-                    var ageRange = jsonPath.eval(result, '$.imageFaces[0].age.ageRange')[0];
+                    var ageRange = jsonPath.eval(face, '$.imageFaces[0].age.ageRange')[0];
                     if (ageRange) {
                         var min = parseInt(ageRange.split('-')[0], 10),
                             max = parseInt(ageRange.split('-')[1], 10),
                             avgAge = ((min + max) / 2).toFixed();
-                        db.createDiary(userId, diaryPhoto, avgAge, diaryContent, function(err, diaryId) {
+                        fm.detect(face, function(err, faceState) {
                             if (err) {
-                                log.error('Failed to create diary, err: '+err);
+                                log.error(err);
                                 return res.status(500).send({error: 'Internal error'});
                             }
-                            res.send({result: diaryId});
+                            async.parallel({
+                                countOne: db.increaseCounter.bind(db),
+                                createDiary: db.createDiary.bind(db, userId, diaryPhoto, avgAge, diaryContent, faceState)
+                            }, function(err, results) {
+                                if (err) {
+                                    log.error('Failed to create diary, err: '+err);
+                                    return res.status(500).send({error: 'Internal error'});
+                                }
+                                res.send({result: results['createDiary']});
+                                var currentCount = results['countOne'];
+                                log.info('current count: '+currentCount);
+                                log.info('threshold: '+config.diagnoThreshold);
+                                if (currentCount >= config.diagnoThreshold) {
+                                    log.info('start to generate report!');
+                                    async.parallel({
+                                        getUndiagnosedDiaries: function(callback) {
+                                            db.getUndiagnosedDiaries(userId, function(err, diaries) {
+                                                if (err) { return callback(err, null); }
+                                                callback(null, diaries);
+                                            });
+                                        },
+                                        resetCounter: db.resetCounter.bind(db)
+                                    }, function(err, results) {
+                                        if (err) { return log.error(err); }
+                                        var diaries = results['getUndiagnosedDiaries'],
+                                            faceStates = [],
+                                            diaryIds = [];
+                                        diaries.forEach(function(diary) {
+                                            faceStates.push(diary.analysis.faceState.result);
+                                            diaryIds.push(diary._id);
+                                        });
+                                        fm.genReport(faceStates, function(err, result) {
+                                            if (err) { return log.error(err); }
+                                            log.info('score: '+result.score);
+                                            log.info('report: '+result.report);
+                                            db.createDiagnosis(userId,
+                                                               diaryIds,
+                                                               result.score,
+                                                               result.report,
+                                                               function(err, diaId) {
+                                                                   if (err) {
+                                                                       log.error('Failed to create diagnosis record, err: '+err);
+                                                                   }
+                                                                   log.info('Diagnosis report created: '+diaId);
+                                                               });
+                                        });
+                                    });
+                                }
+                            });
                         });
                     } else {
                         log.error('Error response from Watson server: '+result);
@@ -151,26 +200,20 @@ exports.diary = function(router) {
         .get(
         function(req, res) {
             var userId = req.params.userId,
-                query = req.query || undefined;
-            if (query) {
-                var yearmonth = query.yearmonth || undefined;
-                if (yearmonth) {
-                    var year = yearmonth.split('-')[0] || undefined,
-                        month = yearmonth.split('-')[1] || undefined;
-                    db.getDiaryByTime(userId, year, month, function(err, result) {
-                        if (err) {
-                            log.error(err);
-                            if (err.name === 'NoDiaryError') {
-                                return res.status(404).send({error: err.message});
-                            }
-                            return res.status(500).send({error: 'Internal error'});
+                yearmonth = jsonPath.eval(req, '$.query.yearmonth');
+            if (yearmonth) {
+                var year = yearmonth.split('-')[0] || undefined,
+                    month = yearmonth.split('-')[1] || undefined;
+                db.getDiaryByTime(userId, year, month, function(err, result) {
+                    if (err) {
+                        log.error(err);
+                        if (err.name === 'NoDiaryError') {
+                            return res.status(404).send({error: err.message});
                         }
-                        res.send({result: processResult(result)});
-                    });
-                } else {
-                    log.error('Unknown query string: '+query);
-                    res.status(400).send({error: 'Bad request'});
-                }
+                        return res.status(500).send({error: 'Internal error'});
+                    }
+                    res.send({result: processResult(result)});
+                });
             } else {
                 db.getAllDiaries(userId, function(err, result) {
                     if (err) {
@@ -266,25 +309,6 @@ exports.diagnosis = function(router) {
                         return res.status(500).send({error: 'Internal error'});
                     }
                     res.send({result: processResult(result)});
-                });
-            }
-        })
-        .options(allow_methods('GET'));
-};
-
-exports.admin = function(router) {
-
-    router.route('/:userId/reset')
-        .get(
-        function(req, res) {
-            var userId = req.params.userId;
-            if (userId === adminId) {
-                async.series({
-                    cleanDiaries: db.deleteAllDiaries(),
-                    cleanDiagnoses: db.deleteAllDiagnoses()
-                }, function(err) {
-                    if (err) { return res.status(500).send({error: err}); }
-                    res.send({result: 'Success'});
                 });
             }
         })

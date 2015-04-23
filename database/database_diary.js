@@ -9,8 +9,10 @@ var DiarySchema = new Schema({
     date: Date,
     content: String,
     analysis: {
-        age: Number
+        age: Number,
+        faceState: Object
     },
+    diagonsed: Boolean,
     userId: String
 });
 var Diary = db.model('Diary', DiarySchema);
@@ -21,9 +23,39 @@ var DiaryPhotoSchema = new Schema({
 });
 var DiaryPhoto = db.model('DiaryPhoto', DiaryPhotoSchema);
 
-exports.createDiary = function(userId, photoBuf, photoAge, content, callback) {
+exports.createDiary = function(userId, photoBuf, photoAge, content, faceState, callback) {
     var diary = new Diary({
         date: new Date(),
+        content: content,
+        analysis: {
+            age: photoAge,
+            faceState: faceState
+        },
+        diagonsed: false,
+        userId: userId
+    });
+    var photo = new DiaryPhoto({
+        diaryId: diary._id,
+        photo: photoBuf
+    });
+
+    log.info('faceState: '+JSON.stringify(faceState));
+    async.each([diary, photo], function(data, done) {
+        data.save(function(err) {
+            if (err) { return done(err, null); }
+            done(null, null);
+        });
+    }, function(err) {
+        if (err) { return callback(err, null); }
+        callback(null, diary._id);
+    });
+};
+
+exports.createDiaryWithDate = function(userId, photoBuf, photoAge, content, dateOffset, callback) {
+
+    var date = new Date();
+    var diary = new Diary({
+        date: new Date(date.setDate(date.getDate()+dateOffset)),
         content: content,
         analysis: {
             age: photoAge
@@ -136,6 +168,17 @@ exports.getDiary = function(id, callback) {
     });
 };
 
+exports.getUndiagnosedDiaries = function(userId, callback) {
+    Diary.find({userId: userId, diagonsed: false}, function(err, diaries) {
+        if (err) { return callback(err, null); }
+        else if (diaries.length === 0) {
+            var error = new Error('No diary found');
+            error.name = 'NoDiaryFound';
+            return callback(error, null);
+        }
+        callback(null, diaries);
+    });
+};
 
 exports.getDiaryPhoto = function(diaryId, callback) {
     DiaryPhoto.findOne({diaryId: diaryId}, function(err, photo) {
@@ -146,6 +189,13 @@ exports.getDiaryPhoto = function(diaryId, callback) {
             return callback(error, null);
         }
         callback(null, photo);
+    });
+};
+
+exports.markDiaryDiagnosed = function(id, callback) {
+    Diary.findOneAndUpdate({_id: id}, {$set: {diagonsed: true}}, {}, function(err) {
+        if (err) { return callback(err, null); }
+        callback(null, null);
     });
 };
 

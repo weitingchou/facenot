@@ -1,5 +1,4 @@
 var db = require('../database'),
-    config = require('./config'),
     log = require('logule').init(module, 'User'),
     async = require('async');
 
@@ -9,24 +8,6 @@ function allow_methods(methods) {
         res.send(200);
     };
 }
-
-// Add an adminstrator account
-function addAdminUser() {
-    db.getUser(config.adminId, function(err) {
-        if (err) {
-            log.error(err);
-            if (err.name === 'IDError') {
-                log.info('Administrator account is yet created!, Creating now.');
-                db.createUser('Administrator', '1985-11-27', '18', config.adminId, function(err) {
-                    if (err) {
-                        log.error('Failed to create user: '+config.adminId+', err: '+err);
-                    }
-                });
-            }
-        }
-    });
-}
-addAdminUser();
 
 exports.user = function(router) {
 
@@ -71,6 +52,9 @@ exports.user = function(router) {
                 birth = req.body.birth || undefined,
                 email = req.body.email || undefined;
 
+            log.info('name: '+name);
+            log.info('birth: '+birth);
+            log.info('email: '+email);
             if (name && checkBirthFormat(birth) && email) {
                 var age = Math.floor(((new Date() - new Date(birth.split('-').reverse().join('-'))) / 1000 / (60*60*24)) / 365.25);
                 db.createUser(name, birth, age, email, function(err) {
@@ -84,7 +68,7 @@ exports.user = function(router) {
                     res.send({result: 'Success'});
                 });
             } else {
-                log.error('Bad request: '+req.body);
+                log.error('Bad request: '+JSON.stringify(req.body));
                 res.status(400).send({error: 'Bad request'});
             }
         })
