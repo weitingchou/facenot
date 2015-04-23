@@ -1,4 +1,4 @@
-"use strict";
+"use sytrict";
 var log = require('logule').init(module, 'QA'),
     request = require('request'),
     config = require('./config').qa;
@@ -31,15 +31,14 @@ exports.askSimpleQuestion = function(questionText, timeout, callback) {
             }
         })
     };
-    log.info('options.body: '+options.body);
-    request.post(options, function(err, res, body) {
+    request.post(options, function(err, res, data) {
         if (err) {
             log.error('Failed to send question to Watson!, err: '+err);
             return callback(err, null);
         }
         try {
-            if (body && isJson(body)) {
-                var ans = JSON.parse(body);
+            if (data && isJson(data)) {
+                var ans = JSON.parse(data);
                 if (ans.length === 0) {
                     var error = new Error('No answer found!');
                     error.name = 'EmptyAnswerError';

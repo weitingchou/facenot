@@ -20,6 +20,7 @@
 
         "multer": "0.1.8",
         "streamifier": "~0.1.1",
+        "winston" : "*",
         "watson-developer-cloud": "~0.9.3"
     }
 }

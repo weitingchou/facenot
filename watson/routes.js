@@ -11,6 +11,7 @@ var log = require('logule').init(module, 'Watson'),
 var watson = require("watson-developer-cloud")
 var streamifier = require("streamifier");
 var credentials = require("./config").speech_to_text;
+var logger = require("../utils/logger");
 
 function allow_methods(methods) {
     return function(req, res) {
@@ -87,10 +88,12 @@ exports.speechToText = function(router) {
 
             var audio = streamifier.createReadStream(req.files.fileAudio.buffer)
 
-            speechToText.recognize({audio: audio, content_type: 'audio/l16; rate=44100'}, function(err, transcript){
+            //speechToText.recognize({audio: audio, content_type: 'audio/l16; rate=44100'}, function(err, transcript){
+            speechToText.recognize({audio: audio, content_type: 'audio/l16; rate=48000; channels=2'}, function(err, transcript){
                 if (err){
                     //return res.status(500).json({ error: err });
                     log.error("error: " + JSON.stringify(err));
+                    logger.error("error: " + JSON.stringify(err));
                     var error = {
                         error : err
                     }
