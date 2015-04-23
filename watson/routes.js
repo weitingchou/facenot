@@ -81,6 +81,8 @@ exports.speechToText = function(router) {
         .post(
         function(req, res) {
             // Stone's part
+
+            credentials.version = "v1";
             var speechToText = watson.speech_to_text(credentials);
 
             var audio = streamifier.createReadStream(req.files.fileAudio.buffer)

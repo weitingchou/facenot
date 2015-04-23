@@ -14,7 +14,7 @@ var speech_to_text = {
     url: VCAP_SERVICES ? VCAP_SERVICES['speech_to_text'][0].credentials.url : undefined,
     username: VCAP_SERVICES ? VCAP_SERVICES['speech_to_text'][0].credentials.username : undefined,
     password: VCAP_SERVICES ? VCAP_SERVICES['speech_to_text'][0].credentials.password : undefined,
-    version: "v1"
+    //version: VCAP_SERVICES ? "v1" : undefined
 };
 
 module.exports = {
