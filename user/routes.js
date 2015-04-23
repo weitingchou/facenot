@@ -12,14 +12,14 @@ function allow_methods(methods) {
 
 // Add an adminstrator account
 function addAdminUser() {
-    db.getUser(config.adminstratorId, function(err) {
+    db.getUser(config.adminId, function(err) {
         if (err) {
             log.error(err);
             if (err.name === 'IDError') {
                 log.info('Administrator account is yet created!, Creating now.');
-                db.createUser('Administrator', 'unknown', '18', config.adminstratorId, function(err) {
+                db.createUser('Administrator', '1985-11-27', '18', config.adminId, function(err) {
                     if (err) {
-                        log.error('Failed to create user: '+config.adminstratorId);
+                        log.error('Failed to create user: '+config.adminId+', err: '+err);
                     }
                 });
             }
@@ -44,7 +44,7 @@ exports.user = function(router) {
                         }
                         return res.status(500).send('Internal error');
                     }
-                    res.send(200, {result: user});
+                    res.send({result: user});
                 });
             } else {
                 log.error('Bad request: no user id provided');
@@ -81,7 +81,7 @@ exports.user = function(router) {
                         }
                         return res.status(500).send({error: 'Internal error'});
                     }
-                    res.send(200, {result: 'Success'});
+                    res.send({result: 'Success'});
                 });
             } else {
                 log.error('Bad request: '+req.body);

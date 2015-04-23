@@ -1,5 +1,6 @@
 var express = require('express'),
     bodyParser = require('body-parser'),
+    multer = require('multer'),
     log = require('logule').init(module, 'App'),
     dye = require('dye'),
     http = require('http'),
@@ -11,6 +12,7 @@ var app = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(multer({ dest: './uploads/', inMemory: true }));
 
 app.use(function(req, res, next) {
     res.on('finish', function() {

@@ -1,5 +1,5 @@
-var administratorId = 'Angely';
+var adminId = 'Angely';
 
 module.exports = {
-    administratorId: administratorId
+    adminId: adminId
 };

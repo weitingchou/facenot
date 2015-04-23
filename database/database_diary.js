@@ -1,5 +1,6 @@
 var log = require('logule').init(module, 'DB'),
     config = require('./config'),
+    async = require('async'),
     mongoose = require('mongoose'),
     Schema = mongoose.Schema,
     db = mongoose.createConnection(config.dbUrl);

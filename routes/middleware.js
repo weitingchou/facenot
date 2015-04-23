@@ -24,5 +24,5 @@ exports.authenticate = function(req, res, next) {
 };
 
 exports.addTo = function(router) {
-    router.use('', exports.authenticate);
+    router.use('/:userId/*', exports.authenticate);
 };

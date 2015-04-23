@@ -1,8 +1,8 @@
 var db = require('../database'),
     jsonPath = require('JSONPath'),
-    alchemyApi = require('../watson/alchemyapi'),
-    adminId = require('../user/config').administratorId,
-    log = require('logule').init(module, 'User'),
+    fd = require('../watson/face_detection'),
+    adminId = require('../user/config').adminId,
+    log = require('logule').init(module, 'API'),
     async = require('async');
 
 function allow_methods(methods) {
@@ -41,7 +41,7 @@ exports.diary = function(router) {
                         }
                         return res.status(500).send('Internal error');
                     }
-                    res.send(200, {result: {
+                    res.send({result: {
                         date: result.date,
                         content: result.content,
                         analysis: {
@@ -70,7 +70,7 @@ exports.diary = function(router) {
                         log.error(err);
                         return res.status(500).send({error: 'Internal error'});
                     }
-                    res.send(200, 'Success');
+                    res.send({result: 'Success'});
                 });
             } else {
                 log.error('Bad request: no diary id is provided');
@@ -92,8 +92,8 @@ exports.diary = function(router) {
                         }
                         return res.status(500).send('Internal error');
                     }
-                    res.set('Content-Tpye', 'image/jpeg');
-                    res.send(200, result);
+                    res.set('Content-Type', 'image/jpg');
+                    res.send(result.photo);
                 });
             } else {
                 log.error('Bad request: no diary id is provided');
@@ -115,18 +115,27 @@ exports.diary = function(router) {
                     log.error(errmsg);
                     return res.status(400).send({error: errmsg});
                 }
-                alchemyApi.face_detection('image', diaryPhoto, null, function(res) {
-                    var ageRange = jsonPath(res, $.imageFaces[0].age.ageRange)[0];
+                fd.detect('image', diaryPhoto, null, function(err, result) {
+                    if (err) {
+                        if (err) {
+                            log.error('Failed to create diary, err: '+err);
+                            return res.status(500).send({error: 'Internal error'});
+                        }
+                    }
+                    var ageRange = jsonPath.eval(result, '$.imageFaces[0].age.ageRange')[0];
                     if (ageRange) {
-                        db.createDiary(userId, diaryPhto, ageRange, diaryContent, function(err, diaryId) {
+                        var min = parseInt(ageRange.split('-')[0], 10),
+                            max = parseInt(ageRange.split('-')[1], 10),
+                            avgAge = ((min + max) / 2).toFixed();
+                        db.createDiary(userId, diaryPhoto, avgAge, diaryContent, function(err, diaryId) {
                             if (err) {
                                 log.error('Failed to create diary, err: '+err);
                                 return res.status(500).send({error: 'Internal error'});
                             }
-                            res.send(200, {result: diaryId});
+                            res.send({result: diaryId});
                         });
                     } else {
-                        log.error('Invalid response from Watson server: '+res);
+                        log.error('Error response from Watson server: '+result);
                         return res.status(500).send({error: 'Internal error'});
                     }
                 });
@@ -156,7 +165,7 @@ exports.diary = function(router) {
                             }
                             return res.status(500).send({error: 'Internal error'});
                         }
-                        res.send(200, {result: processResult(result)});
+                        res.send({result: processResult(result)});
                     });
                 } else {
                     log.error('Unknown query string: '+query);
@@ -171,7 +180,7 @@ exports.diary = function(router) {
                         }
                         return res.status(500).send({error: 'Internal error'});
                     }
-                    res.send(200, {result: processResult(result)});
+                    res.send({result: processResult(result)});
                 });
             }
         })
@@ -193,7 +202,7 @@ exports.diagnosis = function(router) {
                         }
                         return res.status(500).send('Internal error');
                     }
-                    res.send(200, {result: {
+                    res.send({result: {
                         date: result.date,
                         score: result.score,
                         report: result.report,
@@ -214,7 +223,7 @@ exports.diagnosis = function(router) {
                         log.error(err);
                         return res.status(500).send({error: 'Internal error'});
                     }
-                    res.send(200, 'Success');
+                    res.send('Success');
                 });
             } else {
                 log.error('Bad request: no diagnosis id is provided');
@@ -241,7 +250,7 @@ exports.diagnosis = function(router) {
                             }
                             return res.status(500).send({error: 'Internal error'});
                         }
-                        res.send(200, {result: processResult(result)});
+                        res.send({result: processResult(result)});
                     });
                 } else {
                     log.error('Unknown query string: '+query);
@@ -256,7 +265,7 @@ exports.diagnosis = function(router) {
                         }
                         return res.status(500).send({error: 'Internal error'});
                     }
-                    res.send(200, {result: processResult(result)});
+                    res.send({result: processResult(result)});
                 });
             }
         })
@@ -275,7 +284,7 @@ exports.admin = function(router) {
                     cleanDiagnoses: db.deleteAllDiagnoses()
                 }, function(err) {
                     if (err) { return res.status(500).send({error: err}); }
-                    res.send(200, 'Success');
+                    res.send({result: 'Success'});
                 });
             }
         })
