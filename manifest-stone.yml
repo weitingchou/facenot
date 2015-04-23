@@ -1,0 +1,12 @@
+---
+disk_quota: 1024M
+domain: mybluemix.net
+instances: 1
+services:
+- Question and Answer-5t
+- mongodb-pa
+- Speech To Text-uf
+applications:
+- name: Facnot-stone
+  host: facnot-stone
+  memory: 512M

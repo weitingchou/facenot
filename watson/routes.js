@@ -7,6 +7,11 @@ var log = require('logule').init(module, 'Watson'),
     AlchemyAPI = require('./alchemyapi'),
     qa = require('./qa');
 
+// Stone
+var watson = require("watson-developer-cloud")
+var streamifier = require("streamifier");
+var credentials = require("./config").speech_to_text;
+
 function allow_methods(methods) {
     return function(req, res) {
         res.set('Allow', methods.join ? methods.join(',') : methods);
@@ -71,10 +76,33 @@ exports.alchemy = function(router) {
 
 exports.speechToText = function(router) {
 
-    router.route('/speechToText')
+    // Stone modify
+    router.route('/speech_to_text')
         .post(
         function(req, res) {
             // Stone's part
+            var speechToText = watson.speech_to_text(credentials);
+
+            var audio = streamifier.createReadStream(req.files.fileAudio.buffer)
+
+            speechToText.recognize({audio: audio, content_type: 'audio/l16; rate=44100'}, function(err, transcript){
+                if (err){
+                    //return res.status(500).json({ error: err });
+                    log.error("error: " + JSON.stringify(err));
+                    var error = {
+                        error : err
+                    }
+                    return res.status(500).json(error);
+                }
+                else{
+                    transcript = transcript.results[0].alternatives[0].transcript
+
+                    var result = {
+                        result : transcript
+                    }
+                    return res.json(result);
+                }
+            });
         })
         .options(allow_methods('POST'));
 };
