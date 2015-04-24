@@ -1,8 +1,13 @@
-"use strict";
+"use sytrict";
 var log = require('logule').init(module, 'QA'),
     request = require('request'),
-    config = require('./config').qa;
+    config = require('./config').qa,
+    jsonPath = require("JSONPath");
 
+var msgConstants = {
+    INVALIDANSERRNAME: 'InvalidAnswerError',
+    INVALIDANSERRMESSAGE: 'Not a valid answer'
+}
 
 function isJson(string) {
     try {
@@ -31,25 +36,33 @@ exports.askSimpleQuestion = function(questionText, timeout, callback) {
             }
         })
     };
-    log.info('options.body: '+options.body);
-    request.post(options, function(err, res, body) {
+    request.post(options, function(err, res, data) {
         if (err) {
             log.error('Failed to send question to Watson!, err: '+err);
             return callback(err, null);
         }
         try {
-            if (body && isJson(body)) {
-                var ans = JSON.parse(body);
+            if (data && isJson(data)) {
+                var ans = JSON.parse(data);
                 if (ans.length === 0) {
                     var error = new Error('No answer found!');
                     error.name = 'EmptyAnswerError';
                     log.error(error);
                     return callback(error, null);
                 }
-                callback(null, ans);
+                // Process Results
+                //result = jsonPath.eval(ans, "$.[0].question.evidencelist[0].text")[0];
+                var result = jsonPath.eval(ans, '$[0].question.evidencelist[0].text')[0];
+                if (!result) {
+                    var error = new Error(msgConstants.INVALIDANSERRMESSAGE+', err: '+body);
+                    error.name = msgConstants.INVALIDANSERRNAME;
+                    log.error(error);
+                    return callback(error, null);
+                }
+                callback(null, result);
             } else {
-                var error = new Error('Not a valid answer: '+body);
-                error.name = 'InvalidAnswerError';
+                var error = new Error(msgConstants.INVALIDANSERRMESSAGE+', err: '+body);
+                error.name = msgConstants.INVALIDANSERRNAME;
                 log.error(error);
                 callback(error, null);
             }

@@ -3,6 +3,7 @@ var db = require('../database'),
     jsonPath = require('JSONPath'),
     fd = require('../watson/face_detection'),
     fm = require('../watson/face_model'),
+    qa = require('../watson/qa'),
     log = require('logule').init(module, 'API'),
     async = require('async');
 
@@ -66,8 +67,8 @@ exports.diary = function(router) {
             var diaryId = req.params.diaryId || undefined;
             if (diaryId) {
                 async.parallel({
-                    deleteDiary: db.deleteDiary(diaryId),
-                    deleteDiaryPhoto: db.deleteDiaryPhoto(diaryId)
+                    deleteDiary: db.deleteDiary.bind(db, diaryId),
+                    deleteDiaryPhoto: db.deleteDiaryPhoto.bind(db, diaryId)
                 }, function(err) {
                     if (err) {
                         log.error(err);
@@ -265,12 +266,29 @@ exports.diagnosis = function(router) {
                         }
                         return res.status(500).send('Internal error');
                     }
-                    res.send({result: {
-                        date: result.date,
-                        score: result.score,
-                        report: result.report,
-                        diaries: result.analyzedDiaries
-                    }});
+                    var diaries = [];
+                    async.each(result.analyzedDiaries, function(diaryId, done) {
+                        db.getDiary(diaryId, function(err, diary) {
+                            if (err) {
+                                if (err.name === 'IDError') {
+                                    // this might because someone delete the diary after we made
+                                    // diagnosis
+                                    return done();
+                                }
+                                return done(err); 
+                            }
+                            diaries.push(diary);
+                            done();
+                        });
+                    }, function(err) {
+                        if (err) { return res.status(500).send('Internal error'); }
+                        res.send({result: {
+                            date: result.date,
+                            score: result.score,
+                            report: result.report,
+                            diaries: diaries
+                        }});
+                    });
                 });
             } else {
                 log.error('Bad request: no diagnosis id is provided');
@@ -299,7 +317,7 @@ exports.diagnosis = function(router) {
         .get(
         function(req, res) {
             var userId = req.params.userId,
-                query = req.query.yearmonth || undefined;
+                yearmonth = req.query.yearmonth || undefined;
             if (yearmonth) {
                 if (/^([0-9]{4}[-])([0-9]{2})$/i.test(yearmonth)) {
                     var year = yearmonth.split('-')[0] || undefined,
@@ -335,7 +353,66 @@ exports.diagnosis = function(router) {
         .options(allow_methods('GET'));
 };
 
+exports.watsonQA = function(router) {
+
+    router.route('/:userId/qa/')
+        .get(
+        function(req, res) {
+            try {
+                var userId = req.params.userId,
+                    results = [];
+                db.getLatestQA(userId, 10, function(err, data) {
+                    if (err) {
+                        log.error(err);
+                        if (err.name === 'NoQAError') {
+                            return res.status(404).send({error: err.message});
+                        }
+                        return res.status(500).send({error: 'Internal error'});
+                    }
+                    res.send({result: data});
+                });
+            } catch (err) {
+                log.error('Unexpected error: '+err);
+                res.status(500).send({error: 'Internal Error'});
+            }
+        })
+        .post(
+        function(req, res) {
+            try {
+                var userId = req.params.userId,
+                    question = req.body.question || undefined,
+                    timeout = req.body.timeout || 1;
+                if (question) {
+                    qa.askSimpleQuestion(question, timeout, function(err, answer) {
+                        if (err) {
+                            log.error(err);
+                            if (err.name === 'EmptyAnswerError') {
+                                return res.status(404).send({error: err.message});
+                            }
+                            return res.status(500).send({error: 'Internal error'});
+                        }
+                        db.createQA(userId, question, answer, function(err) {
+                            if (err) {
+                                log.error('Unable to persist QA data, err: '+err);
+                                return res.status(500).send({error: 'Internal error'});
+                            }
+                            res.send({result: answer});
+                        });
+                    });
+                } else {
+                    log.error('Bad request, empty question!');
+                    res.status(400).send({error: 'Bad request, empty question'});
+                }
+            } catch (err) {
+                log.error('Unexpected error: '+err);
+                res.status(500).send({error: 'Internal Error'});
+            }
+        })
+        .options(allow_methods('GET', 'POST'));
+};
+
 exports.addTo = function(router) {
     this.diary(router);
     this.diagnosis(router);
+    this.watsonQA(router);
 };

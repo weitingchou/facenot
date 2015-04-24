@@ -5,6 +5,7 @@ instances: 1
 services:
 - Question and Answer-5v
 - MongoLab-qd
+- Speech To Text-j9
 applications:
 - name: Facnot
   host: facnot

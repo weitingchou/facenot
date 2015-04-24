@@ -27,7 +27,9 @@ app.use(function(req, res, next) {
 
 app.use('/user', user.router);
 app.use('/api', routes.router);
-app.use('/api/watson', watson.router);
+// Stone modify 
+//app.use('/api/watson', watson.router);
+app.use('/watson', watson.router);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

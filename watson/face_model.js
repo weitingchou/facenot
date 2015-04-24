@@ -51,7 +51,7 @@ exports.genReport = function(faceStates, callback) {
         score -= getRandom(25);
     }
     if ((cheek.totalPimples / faceStates.length) > 2) {
-        report += 'Having pimples on your left cheek indicates the decreasing ability of detoxification which could be caused by abnormal liver function and poor blood circulation. Liver malfunctioning can lead to accumulation of “heat toxin”.\n';
+        report += 'Having pimples on your left cheek indicates the decreasing ability of detoxification which could be caused by abnormal liver function and poor blood circulation. Liver malfunctioning can lead to accumulation of “heat toxin”. \n';
         score -= getRandom(15);
     }
     if ((cheek.totalPimples+chin.totalPimples+forehead.totalPimples < 20) &&

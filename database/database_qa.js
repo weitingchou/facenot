@@ -21,7 +21,7 @@ exports.createQA = function(userId, question, answer, callback) {
     });
     qa.save(function(err) {
         if (err) { return callback(err, null); }
-        callback(null, 'Success');
+        callback(null, qa._id);
     });
 };
 
@@ -35,6 +35,21 @@ exports.getAllQA = function(userId, callback) {
         }
         callback(null, result);
     });
+};
+
+exports.getLatestQA = function(userId, limit, callback) {
+    QA.find({userId: userId})
+        .sort({date: -1})
+        .limit(limit)
+        .exec(function(err, result) {
+            if (err) { return callback(err, null); }
+            else if (result.length === 0) {
+                var error = new Error('No qa found');
+                error.name = 'NoQAError';
+                return callback(error, null);
+            }
+            callback(null, result);
+        });
 };
 
 exports.getQA = function(id, callback) {

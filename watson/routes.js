@@ -5,6 +5,9 @@
 
 var log = require('logule').init(module, 'Watson'),
     AlchemyAPI = require('./alchemyapi'),
+    watson = require("watson-developer-cloud"),
+    streamifier = require("streamifier"),
+    credentials = require("./config").speech_to_text,
     qa = require('./qa');
 
 function allow_methods(methods) {
@@ -71,10 +74,36 @@ exports.alchemy = function(router) {
 
 exports.speechToText = function(router) {
 
-    router.route('/speechToText')
+    // Stone modify
+    router.route('/speech_to_text')
         .post(
         function(req, res) {
             // Stone's part
+
+            credentials.version = "v1";
+            var speechToText = watson.speech_to_text(credentials);
+
+            var audio = streamifier.createReadStream(req.files.fileAudio.buffer)
+
+            //speechToText.recognize({audio: audio, content_type: 'audio/l16; rate=44100'}, function(err, transcript){
+            speechToText.recognize({audio: audio, content_type: 'audio/l16; rate=48000; channels=2'}, function(err, transcript){
+                if (err){
+                    //return res.status(500).json({ error: err });
+                    log.error("error: " + JSON.stringify(err));
+                    var error = {
+                        error : err
+                    }
+                    return res.status(500).json(error);
+                }
+                else{
+                    transcript = transcript.results[0].alternatives[0].transcript
+
+                    var result = {
+                        result : transcript
+                    }
+                    return res.json(result);
+                }
+            });
         })
         .options(allow_methods('POST'));
 };
@@ -88,7 +117,6 @@ exports.qa = function(router) {
                 var question = req.body.question || undefined,
                     timeout = req.body.timeout || 1;
                 if (question) {
-                    log.info('question: '+question);
                     qa.askSimpleQuestion(question, timeout, function(err, answer) {
                         if (err) {
                             log.error(err);
@@ -97,7 +125,7 @@ exports.qa = function(router) {
                             }
                             return res.status(500).send({error: 'Internal error'});
                         }
-                        res.send(200, {result: answer});
+                        res.send({result: answer});
                     });
                 } else {
                     log.error('Bad request, empty question!');
@@ -105,7 +133,7 @@ exports.qa = function(router) {
                 }
             } catch (err) {
                 log.error('Unexpected error: '+err);
-                res.status(500).send({error: 'Interal Error'});
+                res.status(500).send({error: 'Internal Error'});
             }
         })
         .options(allow_methods('POST'));

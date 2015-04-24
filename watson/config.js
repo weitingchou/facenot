@@ -9,6 +9,16 @@ var qa = {
     url: VCAP_SERVICES ? VCAP_SERVICES['question_and_answer'][0].credentials.url : undefined
 };
 
+// Stone modify
+var speech_to_text = {
+    url: VCAP_SERVICES ? VCAP_SERVICES['speech_to_text'][0].credentials.url : undefined,
+    username: VCAP_SERVICES ? VCAP_SERVICES['speech_to_text'][0].credentials.username : undefined,
+    password: VCAP_SERVICES ? VCAP_SERVICES['speech_to_text'][0].credentials.password : undefined,
+    //version: VCAP_SERVICES ? "v1" : undefined
+};
+
 module.exports = {
-    qa: qa
+    qa: qa,
+// Stone modify
+    speech_to_text: speech_to_text
 };
