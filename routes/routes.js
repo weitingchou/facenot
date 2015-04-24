@@ -123,11 +123,22 @@ exports.diary = function(router) {
                         log.error('Failed to do face detection, err: '+err);
                         return res.status(500).send({error: 'Internal error'});
                     }
+
+                    function parseAgeRange(ageRange) {
+                        if (ageRange.indexOf('<') !== -1) {
+                            return parseInt(ageRange.split('<')[1], 10);
+                        } else if (ageRange.indexOf('>') !== -1) {
+                            return parseInt(ageRange.split('>')[1], 10);
+                        } else {
+                            var min = parseInt(ageRange.split('-')[0], 10),
+                                max = parseInt(ageRange.split('-')[1], 10);
+                            return ((min + max) / 2).toFixed();
+                        }
+                    }
+
                     var ageRange = jsonPath.eval(face, '$.imageFaces[0].age.ageRange')[0];
                     if (ageRange) {
-                        var min = parseInt(ageRange.split('-')[0], 10),
-                            max = parseInt(ageRange.split('-')[1], 10),
-                            avgAge = ((min + max) / 2).toFixed();
+                        var age = parseAgeRange(ageRange);
                         fm.detect(face, function(err, faceState) {
                             if (err) {
                                 log.error(err);
@@ -135,7 +146,7 @@ exports.diary = function(router) {
                             }
                             async.parallel({
                                 countOne: db.increaseCounter.bind(db),
-                                createDiary: db.createDiary.bind(db, userId, diaryPhoto, avgAge, diaryContent, faceState)
+                                createDiary: db.createDiary.bind(db, userId, diaryPhoto, age, diaryContent, faceState)
                             }, function(err, results) {
                                 if (err) {
                                     log.error('Failed to create diary, err: '+err);
@@ -163,6 +174,9 @@ exports.diary = function(router) {
                                         diaries.forEach(function(diary) {
                                             faceStates.push(diary.analysis.faceState.result);
                                             diaryIds.push(diary._id);
+                                            db.markDiagnosisCompleted(diary._id, function(err) {
+                                                if (err) { log.error(err); }
+                                            });
                                         });
                                         fm.genReport(faceStates, function(err, result) {
                                             if (err) { return log.error(err); }
@@ -200,20 +214,26 @@ exports.diary = function(router) {
         .get(
         function(req, res) {
             var userId = req.params.userId,
-                yearmonth = jsonPath.eval(req, '$.query.yearmonth');
+                yearmonth = req.query.yearmonth || undefined;
             if (yearmonth) {
-                var year = yearmonth.split('-')[0] || undefined,
-                    month = yearmonth.split('-')[1] || undefined;
-                db.getDiaryByTime(userId, year, month, function(err, result) {
-                    if (err) {
-                        log.error(err);
-                        if (err.name === 'NoDiaryError') {
-                            return res.status(404).send({error: err.message});
+                if (/^([0-9]{4}[-])([0-9]{2})$/i.test(yearmonth)) {
+                    var year = yearmonth.split('-')[0] || undefined,
+                        month = yearmonth.split('-')[1] || undefined;
+                    db.getDiaryByTime(userId, year, month, function(err, result) {
+                        if (err) {
+                            log.error(err);
+                            if (err.name === 'NoDiaryError') {
+                                return res.status(404).send({error: err.message});
+                            }
+                            return res.status(500).send({error: 'Internal error'});
                         }
-                        return res.status(500).send({error: 'Internal error'});
-                    }
-                    res.send({result: processResult(result)});
-                });
+                        res.send({result: processResult(result)});
+                    });
+                } else {
+                    var errmsg = 'Invalid yearmonth format, should be YYYY-MM';
+                    log.error(errmsg);
+                    res.status(400).send({error: errmsg});
+                }
             } else {
                 db.getAllDiaries(userId, function(err, result) {
                     if (err) {
@@ -279,10 +299,9 @@ exports.diagnosis = function(router) {
         .get(
         function(req, res) {
             var userId = req.params.userId,
-                query = req.query || undefined;
-            if (query) {
-                var yearmonth = query.yearmonth || undefined;
-                if (yearmonth) {
+                query = req.query.yearmonth || undefined;
+            if (yearmonth) {
+                if (/^([0-9]{4}[-])([0-9]{2})$/i.test(yearmonth)) {
                     var year = yearmonth.split('-')[0] || undefined,
                         month = yearmonth.split('-')[1] || undefined;
                     db.getDiagnosisByTime(userId, year, month, function(err, result) {
@@ -296,8 +315,9 @@ exports.diagnosis = function(router) {
                         res.send({result: processResult(result)});
                     });
                 } else {
-                    log.error('Unknown query string: '+query);
-                    res.status(400).send({error: 'Bad request'});
+                    var errmsg = 'Invalid yearmonth format, should be YYYY-MM';
+                    log.error(errmsg);
+                    res.status(400).send({error: errmsg});
                 }
             } else {
                 db.getAllDiagnoses(userId, function(err, result) {

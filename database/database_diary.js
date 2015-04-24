@@ -192,7 +192,7 @@ exports.getDiaryPhoto = function(diaryId, callback) {
     });
 };
 
-exports.markDiaryDiagnosed = function(id, callback) {
+exports.markDiagnosisCompleted = function(id, callback) {
     Diary.findOneAndUpdate({_id: id}, {$set: {diagonsed: true}}, {}, function(err) {
         if (err) { return callback(err, null); }
         callback(null, null);

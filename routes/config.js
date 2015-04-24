@@ -1,4 +1,4 @@
-var diagnoThreshold = 2;
+var diagnoThreshold = 5;
 
 module.exports = {
     diagnoThreshold: diagnoThreshold

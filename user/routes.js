@@ -36,26 +36,11 @@ exports.user = function(router) {
 
     router.route('/')
         .post(function(req, res) {
-            function checkBirthFormat(birth) {
-                if (birth) {
-                    var validator = /^([0-9]{4}[-])([0-9]{2}[-])([0-9]{2})$/i;
-                    if (!validator.test(birth)) {
-                        return false;
-                    } else {
-                        return true;
-                    }
-                }
-                return false;
-            }
-
             var name = req.body.name || undefined,
                 birth = req.body.birth || undefined,
                 email = req.body.email || undefined;
 
-            log.info('name: '+name);
-            log.info('birth: '+birth);
-            log.info('email: '+email);
-            if (name && checkBirthFormat(birth) && email) {
+            if (name && birth && /^([0-9]{4}[-])([0-9]{2}[-])([0-9]{2})$/i.test(birth) && email) {
                 var age = Math.floor(((new Date() - new Date(birth.split('-').reverse().join('-'))) / 1000 / (60*60*24)) / 365.25);
                 db.createUser(name, birth, age, email, function(err) {
                     if (err) {
