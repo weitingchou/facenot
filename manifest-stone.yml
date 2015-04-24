@@ -7,6 +7,6 @@ services:
 - mongodb-pa
 - Speech To Text-uf
 applications:
-- name: facnot-stone-test
-  host: facnot-stone-test
+- name: facnot-stone
+  host: facnot-stone
   memory: 512M

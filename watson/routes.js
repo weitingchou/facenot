@@ -138,7 +138,7 @@ exports.qa = function(router) {
                 }
             } catch (err) {
                 log.error('Unexpected error: '+err);
-                res.status(500).send({error: 'Interal Error'});
+                res.status(500).send({error: 'Internal Error'});
             }
         })
         .options(allow_methods('POST'));

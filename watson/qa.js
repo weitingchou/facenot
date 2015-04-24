@@ -2,6 +2,7 @@
 var log = require('logule').init(module, 'QA'),
     request = require('request'),
     config = require('./config').qa;
+var jsonPath = require("JSONPath");
 
 
 function isJson(string) {
@@ -45,7 +46,13 @@ exports.askSimpleQuestion = function(questionText, timeout, callback) {
                     log.error(error);
                     return callback(error, null);
                 }
-                callback(null, ans);
+    
+                // Process Results
+                //result = jsonPath.eval(ans, "$.[0].question.evidencelist[0].text");
+                result = ans[0].question.evidencelist[0].text
+
+                //callback(null, ans);
+                callback(null, result);
             } else {
                 var error = new Error('Not a valid answer: '+body);
                 error.name = 'InvalidAnswerError';
