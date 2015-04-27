@@ -110,7 +110,7 @@
 			
                 <div>
                     <table id="resultTable"  align="center">
-                        <tr id="resultP">
+                        <tr>
                             <td><img class="img-circle" width="210px" height="210px" src="" id="testImg0" style="display:none"></td>
                             <td><img class="img-circle" width="210px" height="210px" src="" id="testImg1" style="display:none"></td>
                             <td><img class="img-circle" width="210px" height="210px" src="" id="testImg2" style="display:none"></td>
@@ -118,7 +118,7 @@
                             <td><img class="img-circle" width="210px" height="210px" src="" id="testImg4" style="display:none"></td>
                         </tr>
                             
-                        <tr id="resultD" style="vertical-align:top;">
+                        <tr style="vertical-align:top;">
 
                             <td><ul class="list-inline item-details" id="testDiary0" style="display:none"></ul></td>
                             <td><ul class="list-inline item-details" id="testDiary1" style="display:none"></ul></td>
@@ -321,9 +321,10 @@
             /*
             */
             setTimeout(function(){ 
+							
                 var username = document.getElementById("username").value;
                 console.log("send_request");
-
+				
                 var request = null;
 				
                 var url = root + "api/" + username + "/diaries"				
@@ -344,10 +345,11 @@
                 request.send(null);
 
 				//$('#resultPhoto').empty();
-                //$('#resultText').empty();
+                
 				
                 if (request.status === 200) {                  
-                  
+                  $('#resultText').empty();
+				  
                   get_ids(username,JSON.parse(request.responseText));
                   waitingDialog.hide();
                 }
@@ -422,6 +424,7 @@
 			request.open('GET', url, true);
 
 			request.onload = function (oEvent) {
+				
 				var json =JSON.parse(request.responseText); // Note: not oReq.responseText
 				json = json.result;
 				
@@ -433,6 +436,7 @@
 				json.date = (date.getMonth() + 1) + '/' + date.getDate() + '/' +  date.getFullYear();				
 				
 				var diaryId = "testDiary" + index
+				
 				//document.getElementById(diaryId).src = "data:image/png;base64," + base64ArrayBuffer(arrayBuffer);
 				
 				tr = $('<li style="display:inline-block; vertical-align:top;">');				 
@@ -440,6 +444,7 @@
 				tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Date:   ' + '</strong></td><td width="190px"><h7>' + json.date + '</h7></td></tr>');
 				tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Diary:   ' + '</strong></td><td width="190px"><h7>' + json.content + '</h7></td></tr>');
 				tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Age:   ' + '</strong></td><td width="190px"><h7>' + json.analysis.age + '</h7></td></tr>');				
+				$('#'+diaryId).empty();
 				$('#'+diaryId).append(tr);
 				
 				document.getElementById(diaryId).style.display = "block";				
