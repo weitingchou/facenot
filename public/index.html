@@ -371,11 +371,16 @@
 		    
 			var index = 0;
 			var internvalId = setInterval( function(){
-				if(index==4) clearInterval(internvalId);;
-				var id = json.result[index].id;
-				get_photo(username,id,index);
-				get_result(username,id,index);
-				index++;
+
+                            if(index>=5){
+                                clearInterval(internvalId);;
+                            }
+                            else{
+                                var id = json.result[index].id;
+                                get_photo(username,id,index);
+                                get_result(username,id,index);
+                                index++;
+                            }
 			}, 100 );
         }
 		
