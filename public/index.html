@@ -297,8 +297,8 @@
     <script>
 
         var myApp;
-        //var root = "http://facnot.mybluemix.net/";
-        var root = "/";
+        var root = "http://facnot.mybluemix.net/";
+        //var root = "/";
 		
         myApp = myApp || (function () {
             var pleaseWaitDiv = $('<div class="modal hide" id="pleaseWaitDialog" data-backdrop="static" data-keyboard="false"><div class="modal-header"><h1>Processing...</h1></div><div class="modal-body"><div class="progress progress-striped active"><div class="bar" style="width: 100%;"></div></div></div></div>');
@@ -323,7 +323,7 @@
             setTimeout(function(){ 
 							
                 var username = document.getElementById("username").value;
-                console.log("send_request");
+                //console.log("send_request");
 				
                 var request = null;
 				
@@ -344,18 +344,17 @@
                 request.open(method, url, false);
                 request.send(null);
 
-				//$('#resultPhoto').empty();
                 
 				
                 if (request.status === 200) {                  
                   $('#resultText').empty();
+                  reset_layout();
 				  
                   get_ids(username,JSON.parse(request.responseText));
                   waitingDialog.hide();
                 }
                 else{
                   
-				  //$('#resultPhoto').empty();
                   $('#resultText').empty();
                   $('#resultText').append('<h5>User is not found.</h5>');
                   waitingDialog.hide();
@@ -368,106 +367,127 @@
             //waitingDialog.hide();
             //get_result(JSON.parse(request.responseText));
         }
+        function reset_layout(){
+
+            for(var index=0;index<5;index++){
+
+                var imageId = "testImg" + index
+                var diaryId = "testDiary" + index
+                document.getElementById(imageId).src = "";
+                document.getElementById(imageId).style.display = "none";
+
+                $('#'+diaryId).empty();
+                document.getElementById(diaryId).style.display = "none";				
+            }
+        }
 
         function get_ids(username,json){
 		    
-			var index = 0;
-			var internvalId = setInterval( function(){
+            var index = 0;
+            var length = json.result.length;
 
-                            if(index>=5){
-                                clearInterval(internvalId);;
-                            }
-                            else{
-                                var id = json.result[index].id;
-                                get_photo(username,id,index);
-                                get_result(username,id,index);
-                                index++;
-                            }
-			}, 100 );
-        }
+            var internvalId = setInterval(function(){
+
+                if(length==0){
+                    clearInterval(internvalId);;
+                    $('#resultText').append('<h5>Empty Diaries.</h5>');
+                }
+                else if(index>=length||index>=5){
+                    clearInterval(internvalId);;
+                }
+                else{
+                    var id = json.result[index].id;
+                    //console.log("id: " + id);
+                    get_photo(username,id,index);
+                    get_result(username,id,index);
+
+                    index++;
+                }
+            }, 100 );
+        };
 		
-		function get_photo(username,id,index){			
-			var url = root + "api/" + username + "/diaryPhoto/" + id
-			
-			var request = new XMLHttpRequest();
+        function get_photo(username,id,index){			
+                var url = root + "api/" + username + "/diaryPhoto/" + id
+                
+                var request = new XMLHttpRequest();
 
-			request.open('GET', url, true);
-			request.responseType = "arraybuffer";
+                request.open('GET', url, true);
+                request.responseType = "arraybuffer";
 
-			request.onload = function (oEvent) {
-			  var arrayBuffer = request.response; // Note: not oReq.responseText
-			  if (arrayBuffer) {
-				var byteArray = new Uint8Array(arrayBuffer);
-								
-				var imageId = "testImg" + index
-				document.getElementById(imageId).src = "data:image/png;base64," + base64ArrayBuffer(arrayBuffer);
-				document.getElementById(imageId).style.display = "block";
-				
-				//document.getElementById("diaryPhoto").src = "data:image/png;base64," + base64ArrayBuffer(arrayBuffer);	
-				//document.getElementById("diaryPhoto").style.visibility = "visible";
-				
-				tr = $('<li>');
-				tr.append('<img class="img-circle" src="data:image/png;base64,' + base64ArrayBuffer(arrayBuffer) + '"height="210" width="210"/></li>');				
-				
-				//$('#resultPhoto').append(tr);
-			  }
-			};
-			
-			request.send(null);
-		}
+                request.onload = function (oEvent) {
+                  var arrayBuffer = request.response; // Note: not oReq.responseText
+                  if (arrayBuffer) {
+                        var byteArray = new Uint8Array(arrayBuffer);
+                                                        
+                        var imageId = "testImg" + index
+                        document.getElementById(imageId).src = "data:image/png;base64," + base64ArrayBuffer(arrayBuffer);
+                        document.getElementById(imageId).style.display = "block";
+                        
+                        //document.getElementById("diaryPhoto").src = "data:image/png;base64," + base64ArrayBuffer(arrayBuffer);	
+                        //document.getElementById("diaryPhoto").style.visibility = "visible";
+                        
+                        tr = $('<li>');
+                        tr.append('<img class="img-circle" src="data:image/png;base64,' + base64ArrayBuffer(arrayBuffer) + '"height="210" width="210"/></li>');				
+                        
+                        //$('#resultPhoto').append(tr);
+                  }
+                };
+                
+                request.send(null);
+        };
 		
         function get_result(username,id,index){
-			//var theUrl = "http://facnot.mybluemix.net/api/" + username + "/diary/" + id
-			var url = root + "api/" + username + "/diary/" + id
-			var request = new XMLHttpRequest();
+                //var theUrl = "http://facnot.mybluemix.net/api/" + username + "/diary/" + id
+                var url = root + "api/" + username + "/diary/" + id
+                var request = new XMLHttpRequest();
 
-			request.open('GET', url, true);
+                request.open('GET', url, true);
 
-			request.onload = function (oEvent) {
-				
-				var json =JSON.parse(request.responseText); // Note: not oReq.responseText
-				json = json.result;
-				
-				//console.log("json: " + JSON.stringify(json));
-				
-				//var date = new Date('2010-10-11T00:00:00+05:30');
-				var date = new Date(json.date);
-				
-				json.date = (date.getMonth() + 1) + '/' + date.getDate() + '/' +  date.getFullYear();				
-				
-				var diaryId = "testDiary" + index
-				
-				//document.getElementById(diaryId).src = "data:image/png;base64," + base64ArrayBuffer(arrayBuffer);
-				
-				tr = $('<li style="display:inline-block; vertical-align:top;">');				 
-               
-				tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Date:   ' + '</strong></td><td width="190px"><h7>' + json.date + '</h7></td></tr>');
-				tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Diary:   ' + '</strong></td><td width="190px"><h7>' + json.content + '</h7></td></tr>');
-				tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Age:   ' + '</strong></td><td width="190px"><h7>' + json.analysis.age + '</h7></td></tr>');				
-				$('#'+diaryId).empty();
-				$('#'+diaryId).append(tr);
-				
-				document.getElementById(diaryId).style.display = "block";				
-				/*
-                tr = $('<li>');
-                tr.append("<h5>Date: <strong><a>" + json.date + "</a></strong></h5></li>");
-                tr.append("<li><h5>Content: <strong><a>" + json.content + "</a></strong></h5></li>");
-                tr.append("<li><h5>Age: <strong><a>" + json.analysis.age + "</a></strong></h5></li>");
-				
-				$('#resultText').append(tr);
-				*/
-				
-				/*
-				tr = $('<li>');				
-				tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Date:   ' + '</strong></td><td width="190px"><h7>' + json.date + '</h7></td></tr>');
-				tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Diary:   ' + '</strong></td><td width="190px"><h7>' + json.content + '</h7></td></tr>');
-				tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Age:   ' + '</strong></td><td width="190px"><h7>' + json.analysis.age + '</h7></td></tr>');				
-				
-				$('#resultText').append(tr);
-				*/
-			};
-			
-			request.send(null);
+                request.onload = function (oEvent) {
+                        
+                        var json =JSON.parse(request.responseText); // Note: not oReq.responseText
+                        json = json.result;
+                        
+                        //console.log("json: " + JSON.stringify(json));
+                        
+                        //var date = new Date('2010-10-11T00:00:00+05:30');
+                        var date = new Date(json.date);
+                        
+                        json.date = (date.getMonth() + 1) + '/' + date.getDate() + '/' +  date.getFullYear();				
+                        
+                        var diaryId = "testDiary" + index
+                        
+                        //document.getElementById(diaryId).src = "data:image/png;base64," + base64ArrayBuffer(arrayBuffer);
+                        
+                        tr = $('<li style="display:inline-block; vertical-align:top;">');				 
+       
+                        tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Date:   ' + '</strong></td><td width="190px"><h7>' + json.date + '</h7></td></tr>');
+                        tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Diary:   ' + '</strong></td><td width="190px"><h7>' + json.content + '</h7></td></tr>');
+                        tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Age:   ' + '</strong></td><td width="190px"><h7>' + json.analysis.age + '</h7></td></tr>');				
+                        $('#'+diaryId).empty();
+                        $('#'+diaryId).append(tr);
+                        
+                        document.getElementById(diaryId).style.display = "block";				
+                        /*
+        tr = $('<li>');
+        tr.append("<h5>Date: <strong><a>" + json.date + "</a></strong></h5></li>");
+        tr.append("<li><h5>Content: <strong><a>" + json.content + "</a></strong></h5></li>");
+        tr.append("<li><h5>Age: <strong><a>" + json.analysis.age + "</a></strong></h5></li>");
+                        
+                        $('#resultText').append(tr);
+                        */
+                        
+                        /*
+                        tr = $('<li>');				
+                        tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Date:   ' + '</strong></td><td width="190px"><h7>' + json.date + '</h7></td></tr>');
+                        tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Diary:   ' + '</strong></td><td width="190px"><h7>' + json.content + '</h7></td></tr>');
+                        tr.append('<tr align="left"><td width="20px" style="color:#ec8c94;"><strong>' + 'Age:   ' + '</strong></td><td width="190px"><h7>' + json.analysis.age + '</h7></td></tr>');				
+                        
+                        $('#resultText').append(tr);
+                        */
+                };
+                
+                request.send(null);
 		
                 //buildHtmlTable(dishes)
         }
