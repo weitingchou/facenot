@@ -95,60 +95,54 @@
             </div>
 -->
 
-            <form class="navbar-form text-center" role="search" id="formAnalysis">
+            <form class="navbar-form text-center" id="formAnalysis" role="search" onsubmit="return false">
                 <div class="form-group">
                     <input type="text" class="form-control" placeholder="Please enter your user id." id="username">
                 </div>
-                <button type="submit" class="btn btn-default" onclick="send_request('GET')"><span class="glyphicon glyphicon-search"></span></button>
+                <button type="button" class="btn btn-default" onclick="send_request('GET')"><span class="glyphicon glyphicon-search"></span></button>
             </form>
             <!--<p align="center">Please type your own id.</p>-->
-			<!--
-			<div align="center">
-				<img id="diaryPhoto" class="img-circle" src="" height="300" width="300" style="visibility:hidden"/>
-			</div>
-			-->
-			<!--
-			<div align="center">
-				<table>
-					<tr><td>Date:</td><td width="300px" id="date">2015-04-21T12:20:20.000Z</td></tr>
-					<tr><td>Content:</td><td width="300px" id="content">I WENT TO SWIM FOR ONE KILOMETER. ATE AN APPLE AND BANANA FOR MY BREAKFAST, CHICKEN BURGER FOR LUNCH AND TAKE NO FOOD FOR DINNER.</td></tr>
-					<tr><td>Age:</td><td width="300px" id="age">18</td></tr>
-				</table>
-			</div>
-			-->
-			<div>
-				<table id="resultTable"  align="center">
-					<tr id="resultP">
-						<td><img class="img-circle" width="210px" height="210px" src="" id="testImg0" style="display:none"></td>
-						<td><img class="img-circle" width="210px" height="210px" src="" id="testImg1" style="display:none"></td>
-						<td><img class="img-circle" width="210px" height="210px" src="" id="testImg2" style="display:none"></td>
-						<td><img class="img-circle" width="210px" height="210px" src="" id="testImg3" style="display:none"></td>
-						<td><img class="img-circle" width="210px" height="210px" src="" id="testImg4" style="display:none"></td>
-					</tr>
-					
-					<tr id="resultD" style="vertical-align:top;">
-						<td><ul class="list-inline item-details" id="testDiary0" style="display:none"></ul></td>						
-						<td><ul class="list-inline item-details" id="testDiary1" style="display:none"></ul></td>
-						<td><ul class="list-inline item-details" id="testDiary2" style="display:none"></ul></td>
-						<td><ul class="list-inline item-details" id="testDiary3" style="display:none"></ul></td>
-						<td><ul class="list-inline item-details" id="testDiary4" style="display:none"></ul></td>						
-					</tr>
-				</table>
-			</div>
-			<div>
-				<div align="center">				
-					<ul class="list-inline item-details" id="resultPhoto" />
-				</div>
-				</br>			
-				<div align="center">				
-					<ul class="list-inline item-details" id="resultText" />
-				</div>
-			</div>
+                    <!--
+                    <div align="center">
+                            <img id="diaryPhoto" class="img-circle" src="" height="300" width="300" style="visibility:hidden"/>
+                    </div>
+                    -->
+			
+                <div>
+                    <table id="resultTable"  align="center">
+                        <tr id="resultP">
+                            <td><img class="img-circle" width="210px" height="210px" src="" id="testImg0" style="display:none"></td>
+                            <td><img class="img-circle" width="210px" height="210px" src="" id="testImg1" style="display:none"></td>
+                            <td><img class="img-circle" width="210px" height="210px" src="" id="testImg2" style="display:none"></td>
+                            <td><img class="img-circle" width="210px" height="210px" src="" id="testImg3" style="display:none"></td>
+                            <td><img class="img-circle" width="210px" height="210px" src="" id="testImg4" style="display:none"></td>
+                        </tr>
+                            
+                        <tr id="resultD" style="vertical-align:top;">
 
+                            <td><ul class="list-inline item-details" id="testDiary0" style="display:none"></ul></td>
+                            <td><ul class="list-inline item-details" id="testDiary1" style="display:none"></ul></td>
+                            <td><ul class="list-inline item-details" id="testDiary2" style="display:none"></ul></td>
+                            <td><ul class="list-inline item-details" id="testDiary3" style="display:none"></ul></td>
+                            <td><ul class="list-inline item-details" id="testDiary4" style="display:none"></ul></td>						
+                        </tr>
+
+                    </table>
+                </div>			
+                <div>
+                        <div align="center">				
+                                <ul class="list-inline item-details" id="resultPhoto" />
+                        </div>
+                        </br>			
+                        <div align="center">				
+                                <ul class="list-inline item-details" id="resultText" />
+                        </div>
+                </div>			
+			
             <hr style="height:2px;width:50%;background-color:black"/>	
-			<div align="center" style="color:#2C3E50;font-size:large">
-				<i><strong>Please <a style="color:#d58d95;" href="#contact">contact us</a> to send you the invitation to download the application.</strong></i>
-			</div>			
+            <div align="center" style="color:#2C3E50;font-size:large">
+                    <i><strong>Please <a style="color:#d58d95;" href="#contact">contact us</a> to send you the invitation to download the application.</strong></i>
+            </div>			
 
         </div>
     </section>
@@ -303,6 +297,9 @@
     <script>
 
         var myApp;
+        //var root = "http://facnot.mybluemix.net/";
+        var root = "/";
+		
         myApp = myApp || (function () {
             var pleaseWaitDiv = $('<div class="modal hide" id="pleaseWaitDialog" data-backdrop="static" data-keyboard="false"><div class="modal-header"><h1>Processing...</h1></div><div class="modal-body"><div class="progress progress-striped active"><div class="bar" style="width: 100%;"></div></div></div></div>');
             return {
@@ -324,14 +321,12 @@
             /*
             */
             setTimeout(function(){ 
-                var username = document.getElementById("username").value;                
+                var username = document.getElementById("username").value;
+                console.log("send_request");
 
                 var request = null;
-                //var encodeName = encodeURIComponent(username)
-                //var theUrl = "/api/" + username + "/diaries"
 				
-                //var theUrl = "http://facnot.mybluemix.net/api/" + username + "/diaries"
-				var theUrl = "/api/" + username + "/diaries"
+                var url = root + "api/" + username + "/diaries"				
                 request = new XMLHttpRequest();
 
                 /*
@@ -345,11 +340,11 @@
                 }
                 */
 
-                request.open(method, theUrl, false);
+                request.open(method, url, false);
                 request.send(null);
 
-				$('#resultPhoto').empty();
-                $('#resultText').empty();
+				//$('#resultPhoto').empty();
+                //$('#resultText').empty();
 				
                 if (request.status === 200) {                  
                   
@@ -358,7 +353,7 @@
                 }
                 else{
                   
-				  $('#resultPhoto').empty();
+				  //$('#resultPhoto').empty();
                   $('#resultText').empty();
                   $('#resultText').append('<h5>User is not found.</h5>');
                   waitingDialog.hide();
@@ -373,16 +368,7 @@
         }
 
         function get_ids(username,json){
-		    //for (var index=0;index<json.result.length;index++){
-			/*
-			for (var index=0;index<4;index++){
-				var id = json.result[index].id
-                console.log("index: " + json.result[index].id);
-				
-				get_photo(username,id);
-				get_result(username,id);				
-            }
-			*/
+		    
 			var index = 0;
 			var internvalId = setInterval( function(){
 				if(index==4) clearInterval(internvalId);;
@@ -393,13 +379,12 @@
 			}, 100 );
         }
 		
-		function get_photo(username,id,index){
-			//var theUrl = "http://facnot.mybluemix.net/api/" + username + "/diaryPhoto/" + id
-			var theUrl = "/api/" + username + "/diaryPhoto/" + id
+		function get_photo(username,id,index){			
+			var url = root + "api/" + username + "/diaryPhoto/" + id
 			
 			var request = new XMLHttpRequest();
 
-			request.open('GET', theUrl, true);
+			request.open('GET', url, true);
 			request.responseType = "arraybuffer";
 
 			request.onload = function (oEvent) {
@@ -426,14 +411,16 @@
 		
         function get_result(username,id,index){
 			//var theUrl = "http://facnot.mybluemix.net/api/" + username + "/diary/" + id
-			var theUrl = "/api/" + username + "/diary/" + id
+			var url = root + "api/" + username + "/diary/" + id
 			var request = new XMLHttpRequest();
 
-			request.open('GET', theUrl, true);
+			request.open('GET', url, true);
 
 			request.onload = function (oEvent) {
 				var json =JSON.parse(request.responseText); // Note: not oReq.responseText
 				json = json.result;
+				
+				//console.log("json: " + JSON.stringify(json));
 				
 				//var date = new Date('2010-10-11T00:00:00+05:30');
 				var date = new Date(json.date);
