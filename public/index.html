@@ -94,12 +94,17 @@
                 <button type="button" class="btn btn-default btn-md" onclick="send_request('GET')"><i class="fa fa-cloud-upload"></i> Search</button>
             </div>
 -->
+            <div align="center">				
+                <h6 id="resultStatus" style="color:red"></h6>
+            </div>
 
             <form class="navbar-form text-center" id="formAnalysis" role="search" onsubmit="return false">
                 <div class="form-group">
-                    <input type="text" class="form-control" placeholder="Please enter your user id." id="username">
+                    <input type="text" class="form-control" placeholder="Please enter your email:" id="username">
                 </div>
-                <button type="button" class="btn btn-default" onclick="send_request('GET')"><span class="glyphicon glyphicon-search"></span></button>
+                <button type="button" class="btn btn-default" onclick="send_request('GET')">
+                    <span class="glyphicon glyphicon-search"></span>
+                </button>
             </form>
             <!--<p align="center">Please type your own id.</p>-->
                     <!--
@@ -107,6 +112,7 @@
                             <img id="diaryPhoto" class="img-circle" src="" height="300" width="300" style="visibility:hidden"/>
                     </div>
                     -->
+            </br>
 			
                 <div>
                     <table id="resultTable"  align="center">
@@ -128,15 +134,6 @@
                         </tr>
 
                     </table>
-                </div>			
-                <div>
-                        <div align="center">				
-                                <ul class="list-inline item-details" id="resultPhoto" />
-                        </div>
-                        </br>			
-                        <div align="center">				
-                                <ul class="list-inline item-details" id="resultText" />
-                        </div>
                 </div>			
 			
             <hr style="height:2px;width:50%;background-color:black"/>	
@@ -347,7 +344,7 @@
                 
 				
                 if (request.status === 200) {                  
-                  $('#resultText').empty();
+                  //$('#resultText').empty();
                   reset_layout();
 				  
                   get_ids(username,JSON.parse(request.responseText));
@@ -355,9 +352,11 @@
                 }
                 else{
                   
-                  $('#resultText').empty();
-                  $('#resultText').append('<h5>User is not found.</h5>');
-                  waitingDialog.hide();
+                    //$('#resultText').empty();
+
+                    reset_layout();
+                    document.getElementById('resultStatus').innerHTML = "User is not found.";
+                    waitingDialog.hide();
                   //myApp.hidePleaseWait();
                 }
 				
@@ -378,6 +377,8 @@
 
                 $('#'+diaryId).empty();
                 document.getElementById(diaryId).style.display = "none";				
+
+                document.getElementById('resultStatus').innerHTML = "";
             }
         }
 
@@ -390,7 +391,9 @@
 
                 if(length==0){
                     clearInterval(internvalId);;
-                    $('#resultText').append('<h5>Empty Diaries.</h5>');
+                    //$('#resultStatus').append('Empty Diary.');
+                    document.getElementById('resultStatus').innerHTML = "Empty Diary.";
+                    //$('#resultText').append('<h5>Empty Diaries.</h5>');
                 }
                 else if(index>=length||index>=5){
                     clearInterval(internvalId);;
