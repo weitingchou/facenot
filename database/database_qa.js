@@ -39,7 +39,7 @@ exports.getAllQA = function(userId, callback) {
 
 exports.getLatestQA = function(userId, limit, callback) {
     QA.find({userId: userId})
-        .sort({date: -1})
+        .sort({date: 'ascending'})
         .limit(limit)
         .exec(function(err, result) {
             if (err) { return callback(err, null); }

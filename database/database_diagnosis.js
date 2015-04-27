@@ -68,9 +68,24 @@ exports.resetCounter = function(callback) {
     });
 };
 
-exports.createDiagnosis = function(userId, arrayOfDiaries, score, report, callback) {
+exports.createDiagnosis = function(userId, arrayOfDiaries, score, report, createOn, callback) {
+    var targetDate;
+    if (createOn) {
+        var isoDateValidator = /^([0-9]{4}[-])([0-9]{2}[-])([0-9]{2}[T])([0-9]{2}[:])([0-9]{2}[:])([0-9]{2})$/i;
+            isoDateWithTimeZoneValidator = /^([0-9]{4}[-])([0-9]{2}[-])([0-9]{2}[T])([0-9]{2}[:])([0-9]{2}[:])([0-9]{2}[+-])([0-9]{2}[:])([0-9]{2})$/i;
+        if (isoDateValidator.test(createOn) ||
+            isoDateWithTimeZoneValidator.test(createOn)) {
+            targetDate = new Date(Date.parse(createOn));
+        } else {
+            var errmsg = 'Invalid date format of createOn: '+createOn+', it should be ISO format.';
+            log.error(errmsg);
+            return callback(errmsg, null);
+        }
+    } else {
+        targetDate = new Date();
+    }
     var diagnosis = new Diagnosis({
-        date: new Date(),
+        date: targetDate,
         analyzedDiaries: arrayOfDiaries,
         score: score,
         report: report,

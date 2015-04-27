@@ -44,11 +44,13 @@ exports.detect = function(flavor, data, params, callback) {
                 return callback(err, null);
             }
             try {
+                log.info('body: '+body);
                 if (body && isJson(body)) {
-                    callback(null, JSON.parse(body));
+                    result = JSON.parse(body);
+                    callback(null, result);
                 } else {
-                    var error = new Error('Not a valid answer from Watson.');
-                    error.name = 'InvalidAnswerError';
+                    var error = new Error('Not an expected answer format.');
+                    error.name = 'UnexpectedAnswerFormatError';
                     log.error(error);
                     callback(error, null);
                 }

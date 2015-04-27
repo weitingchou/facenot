@@ -10,9 +10,19 @@ var express = require('express'),
 
 var app = express();
 
+function cors(req, res, next) {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'authorization,content-type');
+    res.set('Access-Control-Allow-Credentials', 'true');
+    res.set('Allow', 'GET,POST,PUT,DELETE,OPTIONS');
+    next();
+}
+app.use(cors);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(multer({ inMemory: true }));
+app.use(express.static(__dirname + "/public"));
 
 app.use(function(req, res, next) {
     res.on('finish', function() {
@@ -25,10 +35,8 @@ app.use(function(req, res, next) {
     next();
 });
 
-app.use('/user', user.router);
+app.use('/api/user', user.router);
 app.use('/api', routes.router);
-// Stone modify 
-//app.use('/api/watson', watson.router);
 app.use('/watson', watson.router);
 
 // catch 404 and forward to error handler

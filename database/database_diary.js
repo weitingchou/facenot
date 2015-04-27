@@ -23,9 +23,24 @@ var DiaryPhotoSchema = new Schema({
 });
 var DiaryPhoto = db.model('DiaryPhoto', DiaryPhotoSchema);
 
-exports.createDiary = function(userId, photoBuf, photoAge, content, faceState, callback) {
+exports.createDiary = function(userId, photoBuf, photoAge, content, faceState, createOn, callback) {
+    var targetDate;
+    if (createOn) {
+        var isoDateValidator = /^([0-9]{4}[-])([0-9]{2}[-])([0-9]{2}[T])([0-9]{2}[:])([0-9]{2}[:])([0-9]{2})$/i;
+            isoDateWithTimeZoneValidator = /^([0-9]{4}[-])([0-9]{2}[-])([0-9]{2}[T])([0-9]{2}[:])([0-9]{2}[:])([0-9]{2}[+-])([0-9]{2}[:])([0-9]{2})$/i;
+        if (isoDateValidator.test(createOn) ||
+            isoDateWithTimeZoneValidator.test(createOn)) {
+            targetDate = new Date(Date.parse(createOn));
+        } else {
+            var errmsg = 'Invalid date format of createOn: '+createOn+', it should be ISO format.';
+            log.error(errmsg);
+            return callback(errmsg, null);
+        }
+    } else {
+        targetDate = new Date();
+    }
     var diary = new Diary({
-        date: new Date(),
+        date: targetDate,
         content: content,
         analysis: {
             age: photoAge,

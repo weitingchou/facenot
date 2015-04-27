@@ -6,21 +6,22 @@ var log = require('logule').init(module, 'DB'),
 
 var UserSchema = new Schema({
     name: String,
-    birth: Date,
+    birth: String,
     age: Number,
     id: {type: String, unique: true}
 });
-var User = db.model('User', UserSchema);
+var User = db.model('User', UserSchema, 'UserC');
 
 exports.createUser = function(name, birth, age, id, callback) {
-    var user = new User({
+    var newuser = new User({
         name: name,
         birth: birth,
         age: age,
         id: id
     });
-    user.save(function(err) {
+    newuser.save(function(err) {
         if (err) {
+            log.error('user error: '+err);
             if (err.code === 11000) {
                 var error = new Error('This id is already existing!');
                 error.name = 'DupKeyError';
@@ -33,11 +34,9 @@ exports.createUser = function(name, birth, age, id, callback) {
 };
 
 exports.getUser = function(id, callback) {
-    log.info('id: '+id);
     User.findOne({id: id}, function(err, user) {
         if (err) { return callback(err, null); }
         else if (user === null) {
-            
             var error = new Error('User with the specified id address was not found');
             error.name = 'IDError';
             return callback(error, null);
@@ -60,6 +59,13 @@ exports.deleteAllUsers = function(callback) {
             log.error('Failed to delete all users, err: '+err);
             return callback(err, null);
         }
+        callback(null, null);
+    });
+};
+
+exports.dropUserCollection = function(callback) {
+    db.db.dropCollection('User', function(err) {
+        if (err) { return callback(err, null); }
         callback(null, null);
     });
 };
