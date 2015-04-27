@@ -137,7 +137,8 @@ exports.diary = function(router) {
                     }
 
                     var ageRange = jsonPath.eval(face, '$.imageFaces[0].age.ageRange')[0],
-                        age = 32;
+                        age = 0; // default value, indicating that Watson can't analyze the
+                                 // the input photo.
                     if (ageRange) {
                         age = parseAgeRange(ageRange);
                     } else {
@@ -224,7 +225,7 @@ exports.diary = function(router) {
                         if (err) {
                             log.error(err);
                             if (err.name === 'NoDiaryError') {
-                                return res.status(404).send({error: err.message});
+                                return res.send({result: []});
                             }
                             return res.status(500).send({error: 'Internal error'});
                         }
@@ -342,7 +343,7 @@ exports.diagnosis = function(router) {
                         if (err) {
                             log.error(err);
                             if (err.name === 'NoDiagnosisError') {
-                                return res.status(404).send({error: err.message});
+                                return res.send({result: []});
                             }
                             return res.status(500).send({error: 'Internal error'});
                         }

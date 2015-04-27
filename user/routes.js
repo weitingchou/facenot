@@ -46,7 +46,9 @@ exports.user = function(router) {
                     if (err) {
                         log.error('Failed to create user: '+email);
                         if (err.name === 'DupKeyError') {
-                            return res.status(500).send({error: err.message});
+                            // XXX: for demo
+                            //return res.status(500).send({error: err.message});
+                            return res.send({result: err.message});
                         }
                         return res.status(500).send({error: 'Internal error'});
                     }
