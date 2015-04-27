@@ -241,7 +241,7 @@ exports.diary = function(router) {
                     if (err) {
                         log.error(err);
                         if (err.name === 'NoDiaryError') {
-                            return res.status(404).send({error: err.message});
+                            return res.send({result: []});
                         }
                         return res.status(500).send({error: 'Internal error'});
                     }
@@ -359,7 +359,7 @@ exports.diagnosis = function(router) {
                     if (err) {
                         log.error(err);
                         if (err.name === 'NoDiagnosisError') {
-                            return res.status(404).send({error: err.message});
+                            return res.send({result: []});
                         }
                         return res.status(500).send({error: 'Internal error'});
                     }
